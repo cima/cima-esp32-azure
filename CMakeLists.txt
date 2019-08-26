@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH $ENV{IDF_PATH})
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 include($ENV{IDF_PATH}/tools/cmake/components.cmake)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -34,7 +34,6 @@ include_directories($ENV{IDF_PATH}/components/lwip/include/apps)
 include_directories($ENV{IDF_PATH}/components/lwip/lwip/src/include)
 include_directories($ENV{IDF_PATH}/components/lwip/port/esp32/include)
 include_directories($ENV{IDF_PATH}/components/vfs/include)
-#include_directories($ENV{IDF_PATH}/components/newlib/include)
 include_directories($ENV{IDF_PATH}/components/newlib/platform_include)
 include_directories($ENV{IDF_PATH}/components/ethernet/include)
 
@@ -74,17 +73,16 @@ include_directories(${ARDUINO_BASE}/libraries/WiFi/src)
 # -------------
 
 set (AZURE_IOT_SDK "${AZURE_SDK_PATH_C}/azure-iot-sdk-c")
-set (EXTRA_COMPONENT_DIRS ${AZURE_SDK_PATH_C}/port)
+set (EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} $ENV{IDF_PATH}/components ${AZURE_SDK_PATH_C}/port)
 
 # Adafruit imports
 # ----------------
 
 add_library(ada_bme280 STATIC ${ADAFRUIT_PATH}/Adafruit_BME280.cpp)
 include_directories(${ADAFRUIT_PATH})
+target_compile_features(ada_bme280 PUBLIC cxx_std_17)
 
 # Main code
 # ---------
 
 project(CIMA-ESP32-AZURE)
-
-set(COMPONENT_DIRS main)

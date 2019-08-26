@@ -21,7 +21,7 @@ https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
 
 ## Dependencies
 
-- ESP-IDF
+- ESP-IDF 3.3
 - Azure IoT SDK C
 - Adafruit drivers for Arduino
   - Patch adafruit driver
@@ -32,6 +32,8 @@ https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
 - dependencies
 
     git clone --recursive https://github.com/espressif/esp-idf.git
+
+prefferably clone some up to date release versioin >= 3.3 (see more at https://github.com/espressif/esp-idf/)
 
 ### Azure IoT SDK
 - clone with submodules 

@@ -5,12 +5,17 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include <HardwareSerial.h>
+//#include <HardwareSerial.h>
 
-namespace cima {
+namespace cima::system {
+
+    bool Log::started = false;
 
     void Log::init() {
-        Serial.begin(115200);
+        if( ! started) {
+            //Serial.begin(115200);
+            started = true;
+        }
     }
 
     void Log::info(const char* format, ...) {
@@ -21,7 +26,7 @@ namespace cima {
    
         vsnprintf(buffer, 511, format, args);
 
-        Serial.println(buffer);
+        //Serial.println(buffer);
         va_end(args);   
     }
 
@@ -33,7 +38,7 @@ namespace cima {
    
         vsnprintf(buffer, 511, format, args);
 
-        Serial.println(buffer);
+        //Serial.println(buffer);
         va_end(args);   
     }
 

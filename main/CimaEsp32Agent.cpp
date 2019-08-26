@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. 
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,7 +14,7 @@
 
 #include <iothubtransportmqtt.h>
 
-#include <WiFi.h>
+#include "system/WifiManager.h"
 //#include "AzureIotHub.h"
 //#include "Esp32MQTTClient.h"
 
@@ -28,7 +25,7 @@
 #include "log/Log.h"
 #include "certificates/CertSource.h"
 
-cima::Log logger;
+cima::system::Log logger("main");
 
 Adafruit_BME280 bme; // I2C
 
@@ -37,8 +34,8 @@ Adafruit_BME280 bme; // I2C
 #define MESSAGE_MAX_LEN 256
 
 // Please input the SSID and password of WiFi
-const char* ssid     = "<your wifi SSID here>";
-const char* password = "<your wifi password here>";
+std::string ssid     = "<your wifi SSID here>";
+std::string password = "<your wifi password here>";
 
 /*String containing Hostname, Device Id & Device Key in the format:                         */
 /*  "HostName=<host_name>;DeviceId=<device_id>;SharedAccessKey=<device_key>"                */
@@ -53,26 +50,14 @@ const char *messageData = "{\"greetings\":\"Hello world!\", \"Temperature\":%f, 
 IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
 
 int messageCount = 1;
-static bool hasWifi = false;
+cima::system::WifiManager wifiManager(ssid, password);
+
 static bool messageSending = true;
 static uint64_t send_interval_ms;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Utilities
-static void InitWifi()
-{
-  logger.info("Connecting...");
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    logger.info(".");
-  }
-  hasWifi = true;
-  
-  logger.info("WiFi connected");
-  logger.info("IP address: ");
-  logger.info("%s", WiFi.localIP());
-}
+
 
 static void SendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result)
 {
@@ -131,11 +116,9 @@ static int  DeviceMethodCallback(const char *methodName, const unsigned char *pa
   return result;
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Arduino sketch
-//void setup()
-void app_main()
+extern "C" void app_main(void)
 {
+
   logger.init();
   logger.info("ESP32 Device");
   logger.info("Initializing...");
@@ -144,10 +127,8 @@ void app_main()
   // Initialize the WiFi module
   
   logger.info(" > WiFi");
-  hasWifi = false;
-  InitWifi();
-  if (!hasWifi)
-  {
+  wifiManager.init();
+  if ( ! wifiManager) {
     return;
   }
   randomSeed(analogRead(0));
