@@ -4,9 +4,13 @@ set(CXX_EXTENSIONS ON)
 
 set(COMPONENT_SRCS
     "CimaEsp32Agent.cpp"
-    "certificates/CertSource.cpp" "certificates/CertSource.h" 
     "system/Log.h" "system/Log.cpp"
     "system/WifiManager.h" "system/WifiManager.cpp"
+    "system/WireManager.h" "system/WireManager.cpp"
+    "system/EnvironmentSensorManager.h" "system/EnvironmentSensorManager.cpp"
+    "system/ManagerNotInitializedException.h"
+    "iot/CertSource.cpp" "iot/CertSource.h"
+    "iot/IotHubManager.cpp" "iot/IotHubManager.h"
 )
 
 set(COMPONENT_ADD_INCLUDEDIRS "." ${AZURE_SDK_PATH_C}/azure-iot-sdk-c/iothub_client)
