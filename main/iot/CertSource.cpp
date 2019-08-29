@@ -1,4 +1,5 @@
 #include "CertSource.h"
+namespace cima::iot {
 
     CertSource::CertSource() {
         pemPrivateKey = "-----BEGIN PRIVATE KEY----- \
@@ -18,3 +19,4 @@
     std::string CertSource::getPemCertificate() {
         return pemCertificate;
     }
+}
