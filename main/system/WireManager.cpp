@@ -1,6 +1,5 @@
 #include "WireManager.h"
-
-#include <Wire.h>
+#include "ManagerNotInitializedException.h"
 
 namespace cima::system {
 
@@ -9,12 +8,12 @@ namespace cima::system {
     WireManager::WireManager(uint32_t setBits, uint32_t resetBits) 
             : setBits(setBits), resetBits(resetBits) {};
 
-    WireManager::init() {
-        Wire.begin(this.setBits, this.resetBits);
+    void WireManager::init() {
+        Wire.begin(setBits, resetBits);
         initialized = true;
     }
 
-    Wire *WireManager::getWire() {
+    TwoWire *WireManager::getWire() {
         if( ! initialized) {
             throw ManagerNotInitializedException();
         }

@@ -1,7 +1,3 @@
-set(CXX_STANDARD 17)
-set(CXX_STANDARD_REQUIRED ON)
-set(CXX_EXTENSIONS ON)
-
 set(COMPONENT_SRCS
     "CimaEsp32Agent.cpp"
     "system/Log.h" "system/Log.cpp"
@@ -16,6 +12,12 @@ set(COMPONENT_SRCS
 set(COMPONENT_ADD_INCLUDEDIRS "." ${AZURE_SDK_PATH_C}/azure-iot-sdk-c/iothub_client)
 
 register_component()
+
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CXX_FLAGS ${CXX_FLAGS} -std=c++17 -Wfatal-errors)
 
 component_compile_definitions(SET_TRUSTED_CERT_IN_SAMPLES)
 option(BUILD_SHARED_LIBS OFF)

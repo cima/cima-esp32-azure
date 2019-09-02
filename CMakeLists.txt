@@ -11,11 +11,14 @@ include($ENV{IDF_PATH}/tools/cmake/components.cmake)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CXX_FLAGS ${CXX_FLAGS} -std=c++17 -Wfatal-errors -fexceptions)
 
 add_compile_definitions(ARDUINO=150)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/config)
+
+enable_language(CXX)
 
 # ESP32 imports
 # ------------- 
@@ -78,7 +81,7 @@ set (EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} $ENV{IDF_PATH}/components ${AZ
 # Adafruit imports
 # ----------------
 
-add_library(ada_bme280 STATIC ${ADAFRUIT_PATH}/Adafruit_BME280.cpp)
+add_library(ada_bme280 STATIC ${ADAFRUIT_PATH}/Adafruit_BME280.cpp ${ADAFRUIT_PATH}/Adafruit_BME280.h ${ADAFRUIT_PATH}/Adafruit_sensor.h)
 include_directories(${ADAFRUIT_PATH})
 target_compile_features(ada_bme280 PUBLIC cxx_std_17)
 

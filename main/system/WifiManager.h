@@ -19,6 +19,6 @@ public:
 
     void start();
     bool isStarted();
-}
+};
 
 }

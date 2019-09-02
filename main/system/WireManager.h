@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <Wire.h>
 
 namespace cima::system {
     class WireManager {
@@ -15,7 +16,7 @@ namespace cima::system {
 
         void init();
 
-        Wire *getWire();
+        TwoWire *getWire();
 
     };
 }
