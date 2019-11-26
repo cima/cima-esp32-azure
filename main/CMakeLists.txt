@@ -17,6 +17,7 @@ enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
+CONFIG_COMPILER_CXX_EXCEPTIONS
 set(CXX_FLAGS ${CXX_FLAGS} -std=c++17 -Wfatal-errors)
 
 component_compile_definitions(SET_TRUSTED_CERT_IN_SAMPLES)
@@ -35,7 +36,6 @@ target_link_libraries(${COMPONENT_TARGET}
     idf_component_tcpip_adapter 
     idf_component_lwip 
     idf_component_vfs 
-    idf_component_newlib 
     idf_component_ethernet
     ada_bme280
 

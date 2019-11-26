@@ -5,14 +5,16 @@ namespace cima::system {
         : wireManager(wireManager) {}
 
     void EnvironmentSensorManager::init() {
-        bme.begin(wireManager.getWire());  
+        //bme.begin(wireManager.getWire());  
     }
 
     float EnvironmentSensorManager::readTemperature() {
-        return (float)bme.readTemperature();
+        //return (float)bme.readTemperature();
+        return 0.0;
     }   
     
     float EnvironmentSensorManager::readHumidity() {
-        return bme.readHumidity();
+        //return bme.readHumidity();
+        return 0.0;
     }
 }

@@ -22,7 +22,7 @@ namespace cima::iot {
 
         IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
 
-        ::cima::system::Log logger("IoTHubManager");
+        ::cima::system::Log logger;
 
     public:
         IoTHubManager(std::string &connectionString, CertSource &certificate);

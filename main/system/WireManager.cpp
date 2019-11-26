@@ -9,15 +9,16 @@ namespace cima::system {
             : setBits(setBits), resetBits(resetBits) {};
 
     void WireManager::init() {
-        Wire.begin(setBits, resetBits);
+        //TODO Wire.begin(setBits, resetBits);
         initialized = true;
     }
 
-    TwoWire *WireManager::getWire() {
+    void *WireManager::getWire() {
         if( ! initialized) {
             throw ManagerNotInitializedException();
         }
 
-        return &Wire;
+        //TODO
+        return nullptr;
     }
 }

@@ -7,11 +7,11 @@ namespace cima::system {
 
         static bool started;
 
-        std::string &loggerName;
+        const std::string &loggerName;
 
     public:
 
-        Log(std::string &name) : loggerName(name) {};
+        Log(const std::string &name) : loggerName(name) {};
 
         void init();
         void info(const char* format, ...);

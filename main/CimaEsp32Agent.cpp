@@ -12,6 +12,10 @@
 #include "iot/CertSource.h"
 #include "iot/IoTHubManager.h"
 
+#include "esp_timer.h"
+#include "esp_log.h"
+#include "esp_sleep.h"
+
 cima::system::Log logger("main");
 
 std::string ssid     = "<your wifi SSID here>";
@@ -36,6 +40,11 @@ const char *MESSAGE_TEMPLATE = "{\"greetings\":\"Hello world!\", \"Temperature\"
 static bool messageSending = true;
 static uint64_t last_send_ms;
 
+int64_t millis(){
+  int64_t time_since_boot = esp_timer_get_time();
+  return time_since_boot;
+}
+
 extern "C" void app_main(void)
 {
 
@@ -44,7 +53,7 @@ extern "C" void app_main(void)
   logger.info("Initializing...");
 
   logger.info(" > WiFi");
-  wifiManager.init();
+  wifiManager.start();
   
   logger.info(" > IoT Hub");
   iotHubManager.init();
@@ -58,13 +67,13 @@ extern "C" void app_main(void)
   last_send_ms = millis();
 
   //TODO co to je?
-  randomSeed(analogRead(0));
+  //randomSeed(analogRead(0));
 }
 
 void loop() {
-  if (wifiManager.isStarted) {
+  if (wifiManager.isStarted()) {
     if (messageSending && 
-        (int)(millis() - last_send_ms) >= SENDING_INTERVAL &&
+        (millis() - last_send_ms) >= SENDING_INTERVAL &&
         iotHubManager.isReady())
     {
       // Send environmental data
@@ -85,5 +94,6 @@ void loop() {
     }
   }
 
-  delay(10);
+  //This should be 10 seconds -> make it named configurable variable with units
+  usleep(10000000);
 }

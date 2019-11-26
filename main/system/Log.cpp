@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-//#include <HardwareSerial.h>
+#include "esp_log.h"
 
 namespace cima::system {
 
@@ -27,6 +27,8 @@ namespace cima::system {
         vsnprintf(buffer, 511, format, args);
 
         //Serial.println(buffer);
+        ESP_LOGI("INFO", "%s", buffer);
+
         va_end(args);   
     }
 

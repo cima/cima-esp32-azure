@@ -12,7 +12,12 @@
 
 #include <iothubtransportmqtt.h>
 
+#include <string>
+
 namespace cima::iot {
+
+    static ::cima::system::Log logger(std::string("IoTHubManager"));
+
     IoTHubManager::IoTHubManager(std::string &connectionString, CertSource &certificate) 
         : connectionString(connectionString), certificate(certificate) {}
 
