@@ -15,37 +15,36 @@ https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
 - [Visual studio code](https://code.visualstudio.com/)
   - https://github.com/Deous/VSC-Guide-for-esp32
 - git
-- python 3.6+
-- cmake 3.13
-- mingw32-make 3.82
 
 ## Dependencies
 
-### ESP 4.0 (beta 2)
-- [ESP-IDF 4.0 beta 2 Installer](https://docs.espressif.com/projects/esp-idf/en/v4.0-beta2/get-started/windows-setup.html)
 
-### ESP 3.3
-- [ESP-IDF 3.3](https://github.com/espressif/esp-idf/releases/tag/v3.3)
+### ESP 4.0 (beta 2)
+- [Getting started ESP 4.0 (beta 2)](https://docs.espressif.com/projects/esp-idf/en/v4.0-beta2/get-started/index.html)
+- [ESP-IDF](https://github.com/espressif/esp-idf)
+
+    git clone -b release/v4.0 --recursive https://github.com/espressif/esp-idf.git
+
+- [ESP-toolchain 4.0 beta 2 Installer](https://docs.espressif.com/projects/esp-idf/en/v4.0-beta2/get-started/windows-setup.html)
+  - python 3.6+
+  - cmake 3.13
+  - mingw32-make 3.82
+
+### Azure IoT SDK C for ESP
+- [ESP Azure IoT SDK](https://github.com/espressif/esp-azure)
+
+    git clone --recursive https://github.com/espressif/esp-azure.git
+    git submodule update --init --recursive
+
+### BOOST
+- [Getting started with boost](https://www.boost.org/doc/libs/1_71_0/more/getting_started/windows.html)
+- Ensure environment variable *BOOST_ROOT* that contain path to unpacked boost distribution.
 
 ### Misc
 
-- Azure IoT SDK C
 - Adafruit drivers for Arduino
   - Patch adafruit driver
-- Arduino
-
-### ESP-IFD
-- Tools: https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html
-- dependencies
-
-    git clone --recursive https://github.com/espressif/esp-idf.git
-
-prefferably clone some up to date release versioin >= 3.3 (see more at https://github.com/espressif/esp-idf/)
-
-### Azure IoT SDK
-- clone with submodules 
-
-    git clone --recursive https://github.com/espressif/esp-azure
+- [Disable FreeRTOS static allocation API](https://esp32.com/viewtopic.php?t=3504) set in [sdkconfig.defaults](sdkconfig.defaults)
 
 ### Adafruit drivers
 

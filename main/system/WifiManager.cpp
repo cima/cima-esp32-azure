@@ -7,7 +7,7 @@ namespace cima::system {
 
     WifiManager::WifiManager(std::string &ssid, std::string &passphrase) 
         : ssid(ssid), passphrase(passphrase), 
-        logger(Log(std::ref(std::string("WifiManager")))){
+        logger(Log("WifiManager")){
     }
 
     void WifiManager::start(){

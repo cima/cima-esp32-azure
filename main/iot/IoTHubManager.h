@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
-
 #include <iothub_device_client_ll.h>
+
+#include <string>
 
 #include "CertSource.h"
 #include "../system/Log.h"
@@ -22,7 +22,9 @@ namespace cima::iot {
 
         IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
 
-        ::cima::system::Log logger;
+        static ::cima::system::Log logger;
+
+        bool messageSending = false;
 
     public:
         IoTHubManager(std::string &connectionString, CertSource &certificate);
@@ -32,7 +34,6 @@ namespace cima::iot {
         void loop();
 
         void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result);
-        void send_confirm_callback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* userContextCallback);
         void messageCallback(const char* payLoad, int size);
         void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payLoad, int size);
         int deviceMethodCallback(const char *methodName, const unsigned char *payload, int size, unsigned char **response, int *response_size);

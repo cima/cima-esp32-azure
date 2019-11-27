@@ -4,6 +4,8 @@
 //#include "AzureIotHub.h"
 //#include "Esp32MQTTClient.h"
 
+#include<functional>
+
 #include <iothub.h>
 #include <iothub_client_options.h>
 #include <iothub_message.h>
@@ -16,7 +18,7 @@
 
 namespace cima::iot {
 
-    static ::cima::system::Log logger(std::string("IoTHubManager"));
+    ::cima::system::Log IoTHubManager::logger("IoTHubManager");
 
     IoTHubManager::IoTHubManager(std::string &connectionString, CertSource &certificate) 
         : connectionString(connectionString), certificate(certificate) {}
@@ -24,7 +26,7 @@ namespace cima::iot {
     void IoTHubManager::init() {
         (void)IoTHub_Init();
 
-        device_ll_handle = IoTHubDeviceClient_LL_CreateFromConnectionString(connectionString, MQTT_Protocol);
+        device_ll_handle = IoTHubDeviceClient_LL_CreateFromConnectionString(connectionString.c_str(), MQTT_Protocol);
 
         if (
             device_ll_handle == NULL ||
@@ -50,6 +52,10 @@ namespace cima::iot {
         return device_ll_handle != NULL;
     }
 
+    void iot_hub_manager_confirm_callback_wrapper(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* userContextCallback) {
+        ((IoTHubManager *)userContextCallback)->sendConfirmationCallback(result);
+    }
+
     void IoTHubManager::sendMessage(const char *messagePayload) {
         IOTHUB_MESSAGE_HANDLE message_handle = IoTHubMessage_CreateFromString(messagePayload);
       
@@ -61,7 +67,7 @@ namespace cima::iot {
         (void)IoTHubMessage_SetProperty(message_handle, "temperatureAlert", "true");
         (void)IoTHubMessage_SetProperty(message_handle, "type", "CimaEvironmentMessage");
 
-        IoTHubDeviceClient_LL_SendEventAsync(device_ll_handle, message_handle, send_confirm_callback, NULL);
+        IoTHubDeviceClient_LL_SendEventAsync(device_ll_handle, message_handle, iot_hub_manager_confirm_callback_wrapper, this);
 
         // The message is copied to the sdk so the we can destroy it
         IoTHubMessage_Destroy(message_handle);
@@ -75,10 +81,6 @@ namespace cima::iot {
         if (result == IOTHUB_CLIENT_CONFIRMATION_OK) {
             logger.info("Send Confirmation Callback finished.");
         }
-    }
-
-    void IoTHubManager::send_confirm_callback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* userContextCallback) {
-        (void)userContextCallback;
         logger.info("Confirmation callback received for message with result %s\r\n", ENUM_TO_STRING(IOTHUB_CLIENT_CONFIRMATION_RESULT, result));
     }
 
