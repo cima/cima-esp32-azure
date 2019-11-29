@@ -12,11 +12,11 @@ namespace cima::iot {
     }
 
 
-    std::string CertSource::getPemPrivateKey() {
+    const std::string &CertSource::getPemPrivateKey() const {
         return pemPrivateKey;
     }
 
-    std::string CertSource::getPemCertificate() {
+    const std::string &CertSource::getPemCertificate() const {
         return pemCertificate;
     }
 }

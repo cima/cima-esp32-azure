@@ -26,7 +26,6 @@ namespace cima::system {
    
         vsnprintf(buffer, 511, format, args);
 
-        //Serial.println(buffer);
         ESP_LOGI("INFO", "%s", buffer);
 
         va_end(args);   
@@ -40,7 +39,8 @@ namespace cima::system {
    
         vsnprintf(buffer, 511, format, args);
 
-        //Serial.println(buffer);
+        ESP_LOGE("INFO", "%s", buffer);
+
         va_end(args);   
     }
 

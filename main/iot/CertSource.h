@@ -12,8 +12,8 @@ namespace cima::iot {
     public:
         CertSource();
 
-        std::string getPemPrivateKey();
+        const std::string &getPemPrivateKey() const;
 
-        std::string getPemCertificate();
+        const std::string &getPemCertificate() const;
     };
 }

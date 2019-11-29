@@ -2,7 +2,9 @@
 #include <string>
 #include <stdio.h>
 #include <time.h>
+
 #include <thread>
+#include <chrono>
 
 #include "system/Log.h"
 
@@ -39,7 +41,9 @@ cima::system::WireManager wireManager(4, 15);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
 
 cima::iot::CertSource certificate;
-std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net");
+
+/*  "HostName=<host_name>;DeviceId=<device_id>;x509=true"                      */
+std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cima-esp32;x509=true");
 
 cima::iot::IoTHubManager iotHubManager(connectionString, certificate);
 
@@ -65,9 +69,14 @@ extern "C" void app_main(void)
 
   logger.info(" > WiFi");
   auto wifiConnection = std::thread(&cima::system::WifiManager::start, std::ref(wifiManager));
-  
+  wifiConnection.join();
+  while( ! wifiManager.isConnected()){
+    logger.info("Waiting for network");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
   logger.info(" > IoT Hub");
-  //iotHubManager.init(); //TODO
+  iotHubManager.init();
+  auto iotHubManagerLoop = std::thread(&cima::iot::IoTHubManager::loop, std::ref(iotHubManager));
 
   logger.info(" > Wire");
   //wireManager.init(); //TODO
@@ -84,10 +93,11 @@ extern "C" void app_main(void)
 
   last_send_ms = millis();
 
-  wifiConnection.join();
+
   welcomeGizmo.join();
   welcomeSheep.join();
 
+  iotHubManagerLoop.join();
   //TODO co to je?
   //randomSeed(analogRead(0));
 }

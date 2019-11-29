@@ -3,12 +3,16 @@
 #include <iothub_device_client_ll.h>
 
 #include <string>
+#include <memory>
+#include <functional>
 
 #include "CertSource.h"
 #include "../system/Log.h"
 
 namespace cima::iot {
     class IoTHubManager {
+
+        static ::cima::system::Log LOGGER;
 
         /**
          * String containing Hostname, Device Id & Device Key in the format:                         
@@ -18,25 +22,33 @@ namespace cima::iot {
         */
         std::string connectionString;
 
-        CertSource certificate;
+        const CertSource &certificate;
 
-        IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
-
-        static ::cima::system::Log logger;
+        static void releaseIotHubHandle(IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG *iotHubHandle);
+        std::unique_ptr<IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG, decltype(&releaseIotHubHandle)> device_ll_handle;
 
         bool messageSending = false;
+        bool stopFlag = false;
 
     public:
-        IoTHubManager(std::string &connectionString, CertSource &certificate);
+        IoTHubManager(const std::string &connectionString, const CertSource &certificate);
         void init();
         bool isReady();
         void sendMessage(const char *messagePayload);
         void loop();
+        void stop();
 
         void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result);
-        void messageCallback(const char* payLoad, int size);
-        void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payLoad, int size);
-        int deviceMethodCallback(const char *methodName, const unsigned char *payload, int size, unsigned char **response, int *response_size);
+        void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payLoad, size_t size);
+        IOTHUBMESSAGE_DISPOSITION_RESULT messageCallback(IOTHUB_MESSAGE_HANDLE message);
+        int deviceMethodCallback(const char *methodName, const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
+        void connectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS status, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason);
 
+    private:
+        static void sendConfirmationCallbackWrapper(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void* userContextCallback);
+        static void deviceTwinCallbackWrapper(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char* payLoad, size_t size, void* userContextCallback);
+        static IOTHUBMESSAGE_DISPOSITION_RESULT messageCallbackWrapper(IOTHUB_MESSAGE_HANDLE message, void* userContextCallback);
+        static int deviceMethodCallbackWrapper(const char* methodName, const unsigned char* payload, size_t size, unsigned char** response, size_t* responseSize, void* userContextCallback);
+        static void connectionStatusCallbackWrapper(IOTHUB_CLIENT_CONNECTION_STATUS status, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* userContext);
     };
 }
