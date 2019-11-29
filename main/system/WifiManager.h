@@ -10,10 +10,11 @@ namespace cima::system {
 class WifiManager {
 
     static Log LOG;
-    static bool started;
+    bool started;
+    bool connected;
 
-    std::string ssid;
-    std::string passphrase;
+    const std::string ssid;
+    const std::string passphrase;
 
     wifi_init_config_t firmwareWifiConfig = WIFI_INIT_CONFIG_DEFAULT();
     wifi_config_t wifiConfig;
@@ -21,11 +22,12 @@ class WifiManager {
     int connectionAttempts = 0;
 
 public:
-    WifiManager(std::string &ssid, std::string &passphrase);
+    WifiManager(const std::string &ssid, const std::string &passphrase);
 
     void start();
     void initFlashStorage();
     bool isStarted();
+    bool isConnected();
 
     void wifiEventHandler(int32_t event_id, void* event_data);
     void ipEventHandler(int32_t event_id, void* event_data);

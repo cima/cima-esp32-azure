@@ -25,8 +25,12 @@
 
 cima::system::Log logger("main");
 
-std::string ssid     = "<your wifi SSID here>";
-std::string password = "<your wifi password here>";
+//TODO externalize
+#define EXAMPLE_ESP_WIFI_SSID      "Some SSID" //FIXME nekomitovat
+#define EXAMPLE_ESP_WIFI_PASS      "Some Password"   //FIXME nekomitovat"
+
+const std::string ssid     = EXAMPLE_ESP_WIFI_SSID;
+const std::string password = EXAMPLE_ESP_WIFI_PASS;
 
 cima::Agent agent;
 
@@ -55,7 +59,6 @@ int64_t millis(){
 
 extern "C" void app_main(void)
 {
-
   logger.init();
   logger.info("ESP32 Device");
   logger.info("Initializing...");
@@ -78,12 +81,13 @@ extern "C" void app_main(void)
   //TODO looping thread
   auto welcomeGizmo = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(gizmo));
   auto welcomeSheep = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(sheep));
-  
+
   last_send_ms = millis();
 
   wifiConnection.join();
   welcomeGizmo.join();
   welcomeSheep.join();
+
   //TODO co to je?
   //randomSeed(analogRead(0));
 }

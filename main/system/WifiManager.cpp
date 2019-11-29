@@ -10,19 +10,14 @@
 #include <lwip/err.h>
 #include <lwip/sys.h>
 
-//TODO externalize
-#define EXAMPLE_ESP_WIFI_SSID      "Some SSID"
-#define EXAMPLE_ESP_WIFI_PASS      "SomePassword"
 #define EXAMPLE_ESP_MAXIMUM_RETRY  10
 
 namespace cima::system {
 
     Log WifiManager::LOG("WifiManager");
 
-    bool WifiManager::started = false;
-
-    WifiManager::WifiManager(std::string &ssid, std::string &passphrase) 
-        : ssid(ssid), passphrase(passphrase) {
+    WifiManager::WifiManager(const std::string &ssid, const std::string &passphrase) 
+        : started(false), connected(false), ssid(ssid), passphrase(passphrase) {
     }
 
     void WifiManager::start(){
@@ -39,10 +34,11 @@ namespace cima::system {
         ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WifiManager::wifiEventHandlerWrapper, this));
         ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &WifiManager::ipEventHandlerWrapper, this));
 
-        initWifiStationConfig(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+        initWifiStationConfig(ssid, passphrase);
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifiConfig) );
         ESP_ERROR_CHECK(esp_wifi_start());
+        started = true;
 
         LOG.info("Wifi station started.");
     }
@@ -77,6 +73,7 @@ namespace cima::system {
             } else {
                 LOG.info("Connectin to the AP has failed");
             }
+            connected = false;
         }
     }
 
@@ -85,13 +82,17 @@ namespace cima::system {
             ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
             LOG.info("got ip:" IPSTR, IP2STR(&event->ip_info.ip));
             connectionAttempts = 0;
-
-            started = true;
+            connected = true;
         }
     }
 
     bool WifiManager::isStarted(){
         return started;
+    }
+
+    bool WifiManager::isConnected(){
+        return connected = true;
+;
     }
 
     void WifiManager::wifiEventHandlerWrapper(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
