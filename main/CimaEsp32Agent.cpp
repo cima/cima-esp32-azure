@@ -1,7 +1,8 @@
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <stdio.h>
 #include <time.h>
+#include <thread>
 
 #include "system/Log.h"
 
@@ -11,6 +12,8 @@
 
 #include "iot/CertSource.h"
 #include "iot/IoTHubManager.h"
+
+#include "Agent.h"
 
 #include "esp_timer.h"
 #include "esp_log.h"
@@ -25,6 +28,8 @@ cima::system::Log logger("main");
 std::string ssid     = "<your wifi SSID here>";
 std::string password = "<your wifi password here>";
 
+cima::Agent agent;
+
 cima::system::WifiManager wifiManager(ssid, password);
 cima::system::WireManager wireManager(4, 15);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
@@ -34,20 +39,14 @@ std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net");
 
 cima::iot::IoTHubManager iotHubManager(connectionString, certificate);
 
-
 #define SENDING_INTERVAL 10000
 #define DEVICE_ID "Esp32Device"
 #define MESSAGE_MAX_LEN 256
-#define STACK_SIZE 2048
 
 const char *MESSAGE_TEMPLATE = "{\"greetings\":\"Hello world!\", \"Temperature\":%f, \"Humidity\":%f}";
 
-void loop(void * pvParameters);
-void hello(void * pvParameters);
-
 static bool messageSending = true;
 static uint64_t last_send_ms;
-static TaskHandle_t xHandle = NULL;
 
 int64_t millis(){
   int64_t time_since_boot = esp_timer_get_time();
@@ -62,7 +61,7 @@ extern "C" void app_main(void)
   logger.info("Initializing...");
 
   logger.info(" > WiFi");
-  wifiManager.start();
+  auto wifiConnection = std::thread(&cima::system::WifiManager::start, std::ref(wifiManager));
   
   logger.info(" > IoT Hub");
   //iotHubManager.init(); //TODO
@@ -73,23 +72,20 @@ extern "C" void app_main(void)
   logger.info(" > Environment sensor");
   //environmentSensorManager.init(); //TODO
 
-  //TODO looping thread
-  
-  xTaskCreate(hello, "Hello G", STACK_SIZE, (char *)"Gizmo", tskIDLE_PRIORITY, &xHandle);
-  xTaskCreate(hello, "Hello S", STACK_SIZE, (char *)"Sheep", tskIDLE_PRIORITY, NULL);
-  
+  std::string gizmo("Gizmo");
+  std::string sheep("Sheep");
 
+  //TODO looping thread
+  auto welcomeGizmo = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(gizmo));
+  auto welcomeSheep = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(sheep));
+  
   last_send_ms = millis();
 
+  wifiConnection.join();
+  welcomeGizmo.join();
+  welcomeSheep.join();
   //TODO co to je?
   //randomSeed(analogRead(0));
-}
-
-void hello(void * pvParameters) {
-  while(true){
-    logger.info(":-) Hello %s :-)", (char *)pvParameters);
-    vTaskDelay(1000 / portTICK_RATE_MS);
-  }
 }
 
 void loop(void * pvParameters) {
