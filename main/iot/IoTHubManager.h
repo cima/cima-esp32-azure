@@ -4,15 +4,23 @@
 
 #include <string>
 #include <memory>
+#include <map>
+#include <chrono>
 #include <functional>
 
 #include "CertSource.h"
 #include "../system/Log.h"
+#include "../system/ExecutionLimiter.h"
 
 namespace cima::iot {
+
+    typedef std::function<int(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize)> IotHubClientMethod;
+
     class IoTHubManager {
 
         static ::cima::system::Log LOGGER;
+
+        ::cima::system::ExecutionLimiter limiter;
 
         /**
          * String containing Hostname, Device Id & Device Key in the format:                         
@@ -27,7 +35,8 @@ namespace cima::iot {
         static void releaseIotHubHandle(IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG *iotHubHandle);
         std::unique_ptr<IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG, decltype(&releaseIotHubHandle)> iotHubClientHandle;
 
-        bool messageSending = false;
+        std::map<std::string, IotHubClientMethod> methods;
+
         bool stopFlag = false;
 
     public:
@@ -37,6 +46,8 @@ namespace cima::iot {
         void sendMessage(const char *messagePayload);
         void loop();
         void stop();
+
+        void registerMethod(const std::string &methodName, IotHubClientMethod method);
 
         void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result);
         void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payLoad, size_t size);

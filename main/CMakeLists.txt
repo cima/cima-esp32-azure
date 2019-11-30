@@ -6,6 +6,7 @@ set(COMPONENT_SRCS
     "system/WireManager.h" "system/WireManager.cpp"
     "system/EnvironmentSensorManager.h" "system/EnvironmentSensorManager.cpp"
     "system/ManagerNotInitializedException.h"
+    "system/ExecutionLimiter.h" "system/ExecutionLimiter.cpp"
     "iot/CertSource.cpp" "iot/CertSource.h"
     "iot/IotHubManager.cpp" "iot/IotHubManager.h"
     ${AZURE_IOT_SDK}/certs/certs.c

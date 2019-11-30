@@ -5,6 +5,8 @@
 
 #include <thread>
 #include <chrono>
+#include <memory>
+#include <functional>
 
 #include "system/Log.h"
 
@@ -62,6 +64,8 @@ int64_t millis(){
 
 extern "C" void app_main(void)
 {
+  using namespace std::placeholders;
+
   logger.init();
   logger.info("ESP32 Device");
   logger.info("Initializing...");
@@ -69,17 +73,19 @@ extern "C" void app_main(void)
   logger.info(" > WiFi");
   auto wifiConnection = std::thread(&cima::system::WifiManager::start, std::ref(wifiManager));
   wifiConnection.join();
+  
   while( ! wifiManager.isConnected()){
     logger.info("Waiting for network");
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+
   logger.info(" > IoT Hub");
   iotHubManager.init();
-  iotHubManager.loop();
-  /*
-  auto iotHubManagerLoop = std::thread(&cima::iot::IoTHubManager::loop, std::ref(iotHubManager));
-  iotHubManagerLoop.join();
-  */
+  iotHubManager.registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, _1, _2, _3, _4));
+  iotHubManager.registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, _1, _2, _3, _4));
+
+  agent.registerToMainLoop(std::bind(&cima::iot::IoTHubManager::loop, &iotHubManager));
+
   logger.info(" > Wire");
   //wireManager.init(); //TODO
 
@@ -95,6 +101,8 @@ extern "C" void app_main(void)
 
   last_send_ms = millis();
 
+  agent.mainLoop();
+
 
   welcomeGizmo.join();
   welcomeSheep.join();
@@ -103,6 +111,7 @@ extern "C" void app_main(void)
   //randomSeed(analogRead(0));
 }
 
+//TODO deprecated & unused
 void loop(void * pvParameters) {
   if (wifiManager.isStarted()) {
     if (messageSending && 

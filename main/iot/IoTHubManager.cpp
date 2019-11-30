@@ -24,9 +24,10 @@ namespace cima::iot {
     ::cima::system::Log IoTHubManager::LOGGER("IoTHubManager");
 
     IoTHubManager::IoTHubManager(const std::string &connectionString, const CertSource &certificate) 
-        : connectionString(connectionString),
-        certificate(certificate)
-        , iotHubClientHandle(nullptr, &IoTHubManager::releaseIotHubHandle) 
+        : limiter(std::chrono::milliseconds(10)),
+        connectionString(connectionString),
+        certificate(certificate), 
+        iotHubClientHandle(nullptr, &IoTHubManager::releaseIotHubHandle)
         {}
 
     void IoTHubManager::init() {
@@ -107,15 +108,15 @@ namespace cima::iot {
     }
 
     void IoTHubManager::loop() {
-        while( ! stopFlag) 
-        {
-            if(iotHubClientHandle){
-                //LOGGER.info("Do work"); //TODO log trace
-                IoTHubDeviceClient_LL_DoWork(iotHubClientHandle.get());
-            }else{
-                LOGGER.error("missing iotHubClientHandle");
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if( ! limiter.canExecute()) {
+            return;
+        }
+
+        if(iotHubClientHandle){
+            //TODO log trace
+            IoTHubDeviceClient_LL_DoWork(iotHubClientHandle.get());
+        }else{
+            LOGGER.error("missing iotHubClientHandle");
         }
     }
 
@@ -156,8 +157,23 @@ namespace cima::iot {
     // BEGIN ------------ incomming message callbacks section -----------------
     IOTHUBMESSAGE_DISPOSITION_RESULT IoTHubManager::messageCallback(IOTHUB_MESSAGE_HANDLE message) {
         const char *messageId = IoTHubMessage_GetMessageId(message);
+        const char *body = IoTHubMessage_GetString(message);
 
-        LOGGER.info("Incomming Message: %s", messageId ? messageId : "N/A");
+        LOGGER.info("Incomming Message ID: %s", messageId ? messageId : "N/A");
+
+        if(body) {
+            LOGGER.info("body:\n%s", body ? body : "N/A or message is binary");
+        } else {
+            const unsigned char *bytes;
+            size_t size;
+            auto bytesResult = IoTHubMessage_GetByteArray(message, &bytes, &size);
+            if (bytesResult == IOTHUB_MESSAGE_OK) {
+                LOGGER.info("body size %d", size);
+                LOGGER.info("body:\n%.*s", size, bytes);
+            } else {
+                LOGGER.error("Can't even get byte body from the message");
+            }
+        }
         
         //TODO process incomming message. E.g. pass it ot registered observers.
         return IOTHUBMESSAGE_REJECTED;
@@ -168,33 +184,28 @@ namespace cima::iot {
     }
     // END ------------ incomming message callbacks section -----------------
 
-    // BEGIN ---------- device method callbyck section ----------------------
+    // BEGIN ---------- device method callback section ----------------------
+    void IoTHubManager::registerMethod(const std::string &methodName, IotHubClientMethod method){
+        methods[methodName] = method;
+    }
+
     int IoTHubManager::deviceMethodCallback(const char *methodName, const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize) {
 
-        //TODO tohle je z nějakýho examplu, tady se to má jenom přehazovat do registrovanejch observerů
-        LOGGER.info("Try to invoke method %s", methodName);
-        const char *responseMessage = "\"Successfully invoke device method\"";
         int result = 200;
 
-        if (strcmp(methodName, "start") == 0)
-        {
-            LOGGER.info("Start sending temperature and humidity data");
-            messageSending = true;
-        }
-        else if (strcmp(methodName, "stop") == 0)
-        {
-            LOGGER.info("Stop sending temperature and humidity data");
-            messageSending = false;
-        }
-        else
-        {
+        auto method = methods.find(std::string(methodName));
+        if (method == methods.end()) {
             LOGGER.info("No method %s found", methodName);
-            responseMessage = "\"No method found\"";
+            const char *responseMessage = "\"No method found\"";
             result = 404;
-        }
 
-        *responseSize = strlen(responseMessage) + 1;
-        *response = (unsigned char *)strdup(responseMessage);
+            *responseSize = strlen(responseMessage) + 1;
+            *response = (unsigned char *)strdup(responseMessage);
+
+        } else {
+            LOGGER.info("Trying to invoke method %s", methodName);
+            result = method->second(payload, size, response, responseSize);
+        }
 
         return result;
     }
