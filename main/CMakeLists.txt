@@ -8,6 +8,7 @@ set(COMPONENT_SRCS
     "system/ManagerNotInitializedException.h"
     "iot/CertSource.cpp" "iot/CertSource.h"
     "iot/IotHubManager.cpp" "iot/IotHubManager.h"
+    ${AZURE_IOT_SDK}/certs/certs.c
 )
 
 register_component()
@@ -17,4 +18,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
+include_directories(${AZURE_IOT_SDK}/certs)
+add_definitions(-DSET_TRUSTED_CERT_IN_SAMPLES)
 component_compile_definitions(SET_TRUSTED_CERT_IN_SAMPLES)

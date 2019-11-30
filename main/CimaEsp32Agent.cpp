@@ -43,12 +43,11 @@ cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
 cima::iot::CertSource certificate;
 
 /*  "HostName=<host_name>;DeviceId=<device_id>;x509=true"                      */
-std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cima-esp32;x509=true");
+std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cimaesp32;x509=true");
 
 cima::iot::IoTHubManager iotHubManager(connectionString, certificate);
 
 #define SENDING_INTERVAL 10000
-#define DEVICE_ID "Esp32Device"
 #define MESSAGE_MAX_LEN 256
 
 const char *MESSAGE_TEMPLATE = "{\"greetings\":\"Hello world!\", \"Temperature\":%f, \"Humidity\":%f}";
@@ -76,8 +75,11 @@ extern "C" void app_main(void)
   }
   logger.info(" > IoT Hub");
   iotHubManager.init();
+  iotHubManager.loop();
+  /*
   auto iotHubManagerLoop = std::thread(&cima::iot::IoTHubManager::loop, std::ref(iotHubManager));
-
+  iotHubManagerLoop.join();
+  */
   logger.info(" > Wire");
   //wireManager.init(); //TODO
 
@@ -97,7 +99,6 @@ extern "C" void app_main(void)
   welcomeGizmo.join();
   welcomeSheep.join();
 
-  iotHubManagerLoop.join();
   //TODO co to je?
   //randomSeed(analogRead(0));
 }

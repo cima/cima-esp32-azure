@@ -91,7 +91,7 @@ namespace cima::system {
     }
 
     bool WifiManager::isConnected(){
-        return connected = true;
+        return connected;
 ;
     }
 

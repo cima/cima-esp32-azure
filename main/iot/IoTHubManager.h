@@ -25,7 +25,7 @@ namespace cima::iot {
         const CertSource &certificate;
 
         static void releaseIotHubHandle(IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG *iotHubHandle);
-        std::unique_ptr<IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG, decltype(&releaseIotHubHandle)> device_ll_handle;
+        std::unique_ptr<IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG, decltype(&releaseIotHubHandle)> iotHubClientHandle;
 
         bool messageSending = false;
         bool stopFlag = false;

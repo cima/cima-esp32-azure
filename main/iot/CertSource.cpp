@@ -1,16 +1,14 @@
 #include "CertSource.h"
 namespace cima::iot {
 
-    CertSource::CertSource() {
-        pemPrivateKey = "-----BEGIN PRIVATE KEY----- \
-... PEM encoded key content here ... \
------END PRIVATE KEY-----";
+    CertSource::CertSource() :
+        pemPrivateKey("-----BEGIN RSA PRIVATE KEY-----\r\n\
+... PEM encoded key content here ...\r\n\
+-----END RSA PRIVATE KEY-----\r\n"),
 
-        pemCertificate = "-----BEGIN CERTIFICATE----- \
-... PEM encoded certificate content here ... \
------END CERTIFICATE-----";
-    }
-
+        pemCertificate("-----BEGIN CERTIFICATE-----\r\n\
+... PEM encoded certificate content here ...\r\n\
+-----END CERTIFICATE-----\r\n") {}
 
     const std::string &CertSource::getPemPrivateKey() const {
         return pemPrivateKey;

@@ -4,7 +4,10 @@
 #include <thread>
 #include <chrono>
 #include<functional>
-
+ 
+#ifdef SET_TRUSTED_CERT_IN_SAMPLES
+    #include<certs.h>
+#endif
 
 #include <iothub.h>
 #include <iothub_message.h>
@@ -23,7 +26,7 @@ namespace cima::iot {
     IoTHubManager::IoTHubManager(const std::string &connectionString, const CertSource &certificate) 
         : connectionString(connectionString),
         certificate(certificate)
-        , device_ll_handle(nullptr, &IoTHubManager::releaseIotHubHandle) 
+        , iotHubClientHandle(nullptr, &IoTHubManager::releaseIotHubHandle) 
         {}
 
     void IoTHubManager::init() {
@@ -33,58 +36,52 @@ namespace cima::iot {
              return;
         }
     
-        device_ll_handle.reset(IoTHubDeviceClient_LL_CreateFromConnectionString(connectionString.c_str(), MQTT_Protocol));
+        iotHubClientHandle.reset(IoTHubDeviceClient_LL_CreateFromConnectionString(connectionString.c_str(), MQTT_Protocol));
 
-/* TODO zjistit co to je
 #ifdef SET_TRUSTED_CERT_IN_SAMPLES
-        IoTHubDeviceClient_SetOption(device_ll_handle.get(), OPTION_TRUSTED_CERT, certificates);
+        IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_TRUSTED_CERT, certificates);
 #endif
-*/
 
-        if ( ! device_ll_handle ||
-            (IoTHubDeviceClient_LL_SetOption(device_ll_handle.get(), OPTION_X509_CERT, certificate.getPemCertificate().c_str()) != IOTHUB_CLIENT_OK) ||
-            (IoTHubDeviceClient_LL_SetOption(device_ll_handle.get(), OPTION_X509_PRIVATE_KEY, certificate.getPemPrivateKey().c_str()) != IOTHUB_CLIENT_OK)
+        if ( ! iotHubClientHandle ||
+            (IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_X509_CERT, certificate.getPemCertificate().c_str()) != IOTHUB_CLIENT_OK) ||
+            (IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_X509_PRIVATE_KEY, certificate.getPemPrivateKey().c_str()) != IOTHUB_CLIENT_OK)
         ){
             LOGGER.error("failure to set options for x509, aborting");
-            device_ll_handle.reset();
+            iotHubClientHandle.reset();
             return;
         } 
 
         // Device Twin update callback
-        auto deviceTwinsCallbackBindResult = IoTHubDeviceClient_LL_SetDeviceTwinCallback(device_ll_handle.get(), &IoTHubManager::deviceTwinCallbackWrapper, this);
+        auto deviceTwinsCallbackBindResult = IoTHubDeviceClient_LL_SetDeviceTwinCallback(iotHubClientHandle.get(), &IoTHubManager::deviceTwinCallbackWrapper, this);
         if(deviceTwinsCallbackBindResult != IOTHUB_CLIENT_OK){
             LOGGER.error("Binding of callback for device twin update failed. %s", 
             IOTHUB_CLIENT_RESULTStrings(deviceTwinsCallbackBindResult));
         }
 
         // Message callback to get C2D messages
-        auto messageCallbackBindResult = IoTHubDeviceClient_LL_SetMessageCallback(device_ll_handle.get(), &IoTHubManager::messageCallbackWrapper, this);
+        auto messageCallbackBindResult = IoTHubDeviceClient_LL_SetMessageCallback(iotHubClientHandle.get(), &IoTHubManager::messageCallbackWrapper, this);
         if(messageCallbackBindResult != IOTHUB_CLIENT_OK){
             LOGGER.error("Binding of callback for Cloud to device messages failed. %s",
             IOTHUB_CLIENT_RESULTStrings(messageCallbackBindResult));
         }
 
         // Method callback
-        auto deviceMethodCallbackBindResult = IoTHubDeviceClient_LL_SetDeviceMethodCallback(device_ll_handle.get(), &IoTHubManager::deviceMethodCallbackWrapper, this);
+        auto deviceMethodCallbackBindResult = IoTHubDeviceClient_LL_SetDeviceMethodCallback(iotHubClientHandle.get(), &IoTHubManager::deviceMethodCallbackWrapper, this);
         if(deviceMethodCallbackBindResult != IOTHUB_CLIENT_OK){
             LOGGER.error("Binding of callback for device method failed. %s",
             IOTHUB_CLIENT_RESULTStrings(deviceMethodCallbackBindResult));
         }
 
         // Connection status callback to get indication of connection to iothub
-        auto connectionStatusBindResult = IoTHubDeviceClient_LL_SetConnectionStatusCallback(device_ll_handle.get(), &IoTHubManager::connectionStatusCallbackWrapper, this);
+        auto connectionStatusBindResult = IoTHubDeviceClient_LL_SetConnectionStatusCallback(iotHubClientHandle.get(), &IoTHubManager::connectionStatusCallbackWrapper, this);
         if(connectionStatusBindResult != IOTHUB_CLIENT_OK){
             LOGGER.error("Binding of callback for connectivity status failed. %s", 
             IOTHUB_CLIENT_RESULTStrings(connectionStatusBindResult));
         }
-
-        /* TODO
-            Esp32MQTTClient_SetSendConfirmationCallback(SendConfirmationCallback);
-        */
     }
 
     bool IoTHubManager::isReady() {
-        return (bool)device_ll_handle;
+        return (bool)iotHubClientHandle;
     }
 
     void IoTHubManager::sendMessage(const char *messagePayload) {
@@ -99,7 +96,7 @@ namespace cima::iot {
         (void)IoTHubMessage_SetProperty(message_handle, "type", "CimaEvironmentMessage");
 
         //TODO tady to chce nějakou přepravku abych přihodil ještě kontext zprávy
-        auto sendConfirmationCallbackBindResult = IoTHubDeviceClient_LL_SendEventAsync(device_ll_handle.get(), message_handle, sendConfirmationCallbackWrapper, this);
+        auto sendConfirmationCallbackBindResult = IoTHubDeviceClient_LL_SendEventAsync(iotHubClientHandle.get(), message_handle, sendConfirmationCallbackWrapper, this);
         if(sendConfirmationCallbackBindResult != IOTHUB_CLIENT_OK){
             LOGGER.error("Binding of callback for connectivity status failed. %s", 
             IOTHUB_CLIENT_RESULTStrings(sendConfirmationCallbackBindResult));
@@ -110,9 +107,15 @@ namespace cima::iot {
     }
 
     void IoTHubManager::loop() {
-        while( ! stopFlag) {
-            IoTHubDeviceClient_LL_DoWork(device_ll_handle.get());
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        while( ! stopFlag) 
+        {
+            if(iotHubClientHandle){
+                //LOGGER.info("Do work"); //TODO log trace
+                IoTHubDeviceClient_LL_DoWork(iotHubClientHandle.get());
+            }else{
+                LOGGER.error("missing iotHubClientHandle");
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 
