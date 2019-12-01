@@ -29,16 +29,10 @@
 
 cima::system::Log logger("main");
 
-//TODO externalize
-#define EXAMPLE_ESP_WIFI_SSID      "Some SSID" //FIXME nekomitovat
-#define EXAMPLE_ESP_WIFI_PASS      "Some Password"   //FIXME nekomitovat"
-
-const std::string ssid     = EXAMPLE_ESP_WIFI_SSID;
-const std::string password = EXAMPLE_ESP_WIFI_PASS;
-
 cima::Agent agent;
 
-cima::system::WifiManager wifiManager(ssid, password);
+cima::system::WifiManager wifiManager;
+
 cima::system::WireManager wireManager(4, 15);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
 
@@ -70,10 +64,11 @@ extern "C" void app_main(void)
   logger.info("ESP32 Device");
   logger.info("Initializing...");
 
-  logger.info(" > WiFi");
-  auto wifiConnection = std::thread(&cima::system::WifiManager::start, std::ref(wifiManager));
-  wifiConnection.join();
-  
+  if(agent.mountFlashFileSystem()){
+    agent.cat("/spiffs/sheep.txt");
+  }
+
+  agent.setupNetwork(wifiManager);
   while( ! wifiManager.isConnected()){
     logger.info("Waiting for network");
     std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -13,8 +13,8 @@ class WifiManager {
     bool started;
     bool connected;
 
-    const std::string ssid;
-    const std::string passphrase;
+    std::string ssid;
+    std::string passphrase;
 
     wifi_init_config_t firmwareWifiConfig = WIFI_INIT_CONFIG_DEFAULT();
     wifi_config_t wifiConfig;
@@ -22,8 +22,11 @@ class WifiManager {
     int connectionAttempts = 0;
 
 public:
+    WifiManager();
+
     WifiManager(const std::string &ssid, const std::string &passphrase);
 
+    void resetNetwork(const std::string &ssid, const std::string &passphrase);
     void start();
     void initFlashStorage();
     bool isStarted();

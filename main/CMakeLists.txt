@@ -22,3 +22,5 @@ set(CMAKE_CXX_EXTENSIONS ON)
 include_directories(${AZURE_IOT_SDK}/certs)
 add_definitions(-DSET_TRUSTED_CERT_IN_SAMPLES)
 component_compile_definitions(SET_TRUSTED_CERT_IN_SAMPLES)
+
+spiffs_create_partition_image(storage ../filesystem FLASH_IN_PROJECT)

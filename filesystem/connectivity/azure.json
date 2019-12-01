@@ -1,0 +1,9 @@
+{
+    "DeviceProvisioningServices": {
+        "HostName":"",
+        "scopeID": ""
+    },
+    "IoTHub" : {
+        "HostName":"<anything>.azure-devices.net"
+    }
+}

@@ -2,6 +2,7 @@
 
 ## Board info
 [TTGO LoRa32 OLED](https://hackaday.io/project/27791-esp32-lora-oled-module)
+[Manufacturer data sheet](http://www.lilygo.cn/prod_view.aspx?TypeId=50032&Id=1152)
 
 ## Sesnsor info
 https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf

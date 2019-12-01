@@ -16,8 +16,21 @@ namespace cima::system {
 
     Log WifiManager::LOG("WifiManager");
 
+    WifiManager::WifiManager() 
+        : started(false), connected(false), ssid(""), passphrase("") {
+    }
+
     WifiManager::WifiManager(const std::string &ssid, const std::string &passphrase) 
-        : started(false), connected(false), ssid(ssid), passphrase(passphrase) {
+        : ssid(ssid), passphrase(passphrase) {
+    }
+
+    void WifiManager::resetNetwork(const std::string &ssid, const std::string &passphrase) {
+        this->ssid = ssid;
+        this->passphrase = passphrase;
+
+        if(started) {
+            //TODO disconnect and connect again
+        }
     }
 
     void WifiManager::start(){
