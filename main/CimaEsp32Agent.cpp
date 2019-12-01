@@ -29,8 +29,6 @@
 
 cima::system::Log logger("main");
 
-cima::Agent agent;
-
 cima::system::WifiManager wifiManager;
 
 cima::system::WireManager wireManager(4, 15);
@@ -42,6 +40,8 @@ cima::iot::CertSource certificate;
 std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cimaesp32;x509=true");
 
 cima::iot::IoTHubManager iotHubManager(connectionString, certificate);
+
+cima::Agent agent(iotHubManager);
 
 #define SENDING_INTERVAL 10000
 #define MESSAGE_MAX_LEN 256

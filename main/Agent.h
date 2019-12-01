@@ -6,6 +6,7 @@
 
 #include "system/Log.h"
 #include "system/WifiManager.h"
+#include "iot/IoTHubManager.h"
 
 namespace cima {
     class Agent {
@@ -13,10 +14,16 @@ namespace cima {
 
         static std::string FLASH_FILESYSTEM_MOUNT_PATH;
 
+        static std::string MESSAGE_TEMPLATE;
+
         std::list<std::function<void()>> mainLoopFunctions;
+
+        iot::IoTHubManager &iotHubManager;
 
         bool keepRunning = true;
         public:
+            Agent(iot::IoTHubManager &iotHubManager);
+
             void welcome(std::string &visitorName);
             void cat(const std::string &filename);
 

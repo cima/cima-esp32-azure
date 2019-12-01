@@ -21,10 +21,22 @@ namespace cima {
 
     std::string Agent::FLASH_FILESYSTEM_MOUNT_PATH = "/spiffs";
 
+    std::string Agent::MESSAGE_TEMPLATE = "{\"greetings\":\"Hello %s!\", \"Temperature\":%f, \"Humidity\":%f}";
+
+    Agent::Agent(iot::IoTHubManager &iotHubManager) 
+        : iotHubManager(iotHubManager){}
+
     void Agent::welcome(std::string &visitorName){
-        while(true){
+        while(keepRunning){
+            char greeting[128];
+            sprintf(greeting, MESSAGE_TEMPLATE.c_str(), visitorName.c_str(),  0.0, 0.0);
+
             LOGGER.info(":-) Hello %s :-)", visitorName.c_str());
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+            if(iotHubManager.isReady()) {
+                iotHubManager.sendMessage(greeting);
+            }
+
+            std::this_thread::sleep_for(std::chrono::seconds(30));
         }
     }
 
