@@ -1,20 +1,27 @@
 #include "CertSource.h"
+
+#include <string>
+#include <cstring>
+#include <utility>
+#include <memory>
+#include <fstream>
+
 namespace cima::iot {
 
-    CertSource::CertSource() :
-        pemPrivateKey("-----BEGIN RSA PRIVATE KEY-----\r\n\
-... PEM encoded key content here ...\r\n\
------END RSA PRIVATE KEY-----\r\n"),
+    CertSource::CertSource(const std::string &privateKeyFile, const std::string &certificateFile) :
+        pemPrivateKey(privateKeyFile), pemCertificate(certificateFile) {}
 
-        pemCertificate("-----BEGIN CERTIFICATE-----\r\n\
-... PEM encoded certificate content here ...\r\n\
------END CERTIFICATE-----\r\n") {}
+    const std::string CertSource::getPemPrivateKey() const {
+        std::ifstream in(pemPrivateKey, std::ios_base::binary);
+        std::string privateKey((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
 
-    const std::string &CertSource::getPemPrivateKey() const {
-        return pemPrivateKey;
+        return privateKey;
     }
 
-    const std::string &CertSource::getPemCertificate() const {
-        return pemCertificate;
+    const std::string CertSource::getPemCertificate() const {
+        std::ifstream in(pemCertificate, std::ios_base::binary);
+        std::string certificate((std::istreambuf_iterator<char>(in)), (std::istreambuf_iterator<char>()));
+
+        return certificate;
     }
 }

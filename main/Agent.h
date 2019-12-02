@@ -12,8 +12,6 @@ namespace cima {
     class Agent {
         static system::Log LOGGER;
 
-        static std::string FLASH_FILESYSTEM_MOUNT_PATH;
-
         static std::string MESSAGE_TEMPLATE;
 
         std::list<std::function<void()>> mainLoopFunctions;
@@ -22,6 +20,9 @@ namespace cima {
 
         bool keepRunning = true;
         public:
+
+            static std::string FLASH_FILESYSTEM_MOUNT_PATH;
+
             Agent(iot::IoTHubManager &iotHubManager);
 
             void welcome(std::string &visitorName);

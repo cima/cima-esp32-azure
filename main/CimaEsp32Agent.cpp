@@ -34,7 +34,10 @@ cima::system::WifiManager wifiManager;
 cima::system::WireManager wireManager(4, 15);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
 
-cima::iot::CertSource certificate;
+
+std::string keyFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.pem";
+std::string certFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.crt";
+cima::iot::CertSource certificate(keyFile, certFile);
 
 /*  "HostName=<host_name>;DeviceId=<device_id>;x509=true"                      */
 std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cimaesp32;x509=true");

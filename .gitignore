@@ -37,3 +37,7 @@ sdkconfig
 sdkconfig\.old
 
 settings\.json
+
+hlp.md
+
+cimaesp32.p12
