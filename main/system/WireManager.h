@@ -1,22 +1,23 @@
 #pragma once
 
 #include <stdint.h>
-//#include <Wire.h>
+#include <driver/i2c.h>
+#include <iot_i2c_bus.h>
 
 namespace cima::system {
     class WireManager {
 
-        uint32_t setBits;
-        uint32_t resetBits;
+        // Clock pin
+        gpio_num_t sclPin; 
 
-        static bool initialized;
+        // Data pin
+        gpio_num_t sdaPin;
+
+        // Configured wire
+        CI2CBus i2cBus;
 
     public:
-        WireManager(uint32_t setBits, uint32_t resetBits);
-
-        void init();
-
-        void *getWire();
-
+        WireManager(gpio_num_t sclPin, gpio_num_t sdaPin);
+        CI2CBus &getWire();
     };
 }

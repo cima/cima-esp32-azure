@@ -37,6 +37,8 @@ https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
     git clone --recursive https://github.com/espressif/esp-azure.git
     git submodule update --init --recursive
 ```
+and define environment variable named `AZURE_SDK_C_PATH` pointing to the above cloned directory.
+
 ### BOOST
 - [Getting started with boost](https://www.boost.org/doc/libs/1_71_0/more/getting_started/windows.html)
 - Ensure environment variable *BOOST_ROOT* that contain path to unpacked boost distribution.
@@ -49,6 +51,14 @@ https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
 - [Quartz & Bitrate settings](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html#get-started-connect)
 
 ### Adafruit drivers
+Use [ESP IoT Solution](https://github.com/espressif/esp-iot-solution/) clone it with all submodules
+```
+    git clone --recursive https://github.com/espressif/esp-iot-solution.git
+    git submodule update --init --recursive
+```
+and define environment variable named `IOT_SOLUTION_PATH` pointing to the above cloned directory.
+
+In (./CMakeLists.txt) we use a little dirty trick where we only define and use those drives we care of because the rest is highly incompatible with ESP-IDF 4.0 Beta2.
 
 ### Wire
 

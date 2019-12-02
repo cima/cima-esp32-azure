@@ -21,17 +21,37 @@ namespace cima {
 
     std::string Agent::FLASH_FILESYSTEM_MOUNT_PATH = "/spiffs";
 
-    std::string Agent::MESSAGE_TEMPLATE = "{\"greetings\":\"Hello %s!\", \"Temperature\":%f, \"Humidity\":%f}";
+    std::string Agent::MESSAGE_TEMPLATE = "{\
+        \"greetings\":\"Hello %s!\", \
+        \"Temperature\":%f, \
+        \"Humidity\":%f, \
+        \"PressurehPa\": %f, \
+        \"Timestamp\":\"%s\"}";
 
-    Agent::Agent(iot::IoTHubManager &iotHubManager) 
-        : iotHubManager(iotHubManager){}
+    Agent::Agent(iot::IoTHubManager &iotHubManager, system::EnvironmentSensorManager &environmentSensorManager) 
+        : iotHubManager(iotHubManager), environmentSensorManager(environmentSensorManager){}
 
     void Agent::welcome(std::string &visitorName){
         while(keepRunning){
-            char greeting[128];
-            sprintf(greeting, MESSAGE_TEMPLATE.c_str(), visitorName.c_str(),  0.0, 0.0);
 
-            LOGGER.info(":-) Hello %s :-)", visitorName.c_str());
+            auto end = std::chrono::system_clock::now();
+            std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+            char greeting[256];
+            sprintf(greeting, MESSAGE_TEMPLATE.c_str(), 
+                visitorName.c_str(), 
+                environmentSensorManager.readTemperature(), 
+                environmentSensorManager.readHumidity(),
+                environmentSensorManager.readPressure(),
+                std::ctime(&end_time)
+            );
+
+            LOGGER.info(":-) Hello %s :-) %f °C, %f %%, %f hPa", 
+                visitorName.c_str(),
+                environmentSensorManager.readTemperature(), 
+                environmentSensorManager.readHumidity(),
+                environmentSensorManager.readPressure()
+            );
             if(iotHubManager.isReady()) {
                 iotHubManager.sendMessage(greeting);
             }

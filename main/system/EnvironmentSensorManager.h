@@ -6,11 +6,14 @@
 
 #include "WireManager.h"
 
+#include <iot_bme280.h>
+
 namespace cima::system {
     class EnvironmentSensorManager {
 
         WireManager &wireManager;
-        //Adafruit_BME280 bme; // I2C
+        
+        CBme280 bme280;
 
     public:
         EnvironmentSensorManager(WireManager &wireManager);
@@ -18,5 +21,6 @@ namespace cima::system {
 
         float readTemperature();
         float readHumidity();
+        float readPressure();
     };
 }

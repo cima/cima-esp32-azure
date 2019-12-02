@@ -2,19 +2,21 @@
 
 namespace cima::system {
     EnvironmentSensorManager::EnvironmentSensorManager(WireManager &wireManager)
-        : wireManager(wireManager) {}
+        : wireManager(wireManager), bme280(&wireManager.getWire()) {}
 
     void EnvironmentSensorManager::init() {
-        //bme.begin(wireManager.getWire());  
+        bme280.init();
     }
 
     float EnvironmentSensorManager::readTemperature() {
-        //return (float)bme.readTemperature();
-        return 0.0;
+        return bme280.temperature();
     }   
     
     float EnvironmentSensorManager::readHumidity() {
-        //return bme.readHumidity();
-        return 0.0;
+        return bme280.humidity();
+    }
+
+    float EnvironmentSensorManager::readPressure() {
+        return bme280.pressure();
     }
 }

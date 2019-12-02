@@ -27,11 +27,13 @@
 #include <freertos/timers.h>
 #include <freertos/task.h>
 
+#include <driver/gpio.h>
+
 cima::system::Log logger("main");
 
 cima::system::WifiManager wifiManager;
 
-cima::system::WireManager wireManager(4, 15);
+cima::system::WireManager wireManager(GPIO_NUM_15, GPIO_NUM_4 );
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
 
 
@@ -44,7 +46,7 @@ std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net;Devi
 
 cima::iot::IoTHubManager iotHubManager(connectionString, certificate);
 
-cima::Agent agent(iotHubManager);
+cima::Agent agent(iotHubManager, environmentSensorManager);
 
 #define SENDING_INTERVAL 10000
 #define MESSAGE_MAX_LEN 256
@@ -84,16 +86,16 @@ extern "C" void app_main(void)
 
   agent.registerToMainLoop(std::bind(&cima::iot::IoTHubManager::loop, &iotHubManager));
 
-  logger.info(" > Wire");
-  //wireManager.init(); //TODO
-
   logger.info(" > Environment sensor");
-  //environmentSensorManager.init(); //TODO
+  environmentSensorManager.init();
+
+  logger.info("Temp: %f, hum: %f", 
+    environmentSensorManager.readTemperature(), 
+    environmentSensorManager.readHumidity());
 
   std::string gizmo("Gizmo");
   std::string sheep("Sheep");
 
-  //TODO looping thread
   auto welcomeGizmo = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(gizmo));
   auto welcomeSheep = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(sheep));
 
@@ -105,35 +107,4 @@ extern "C" void app_main(void)
   welcomeGizmo.join();
   welcomeSheep.join();
 
-  //TODO co to je?
-  //randomSeed(analogRead(0));
-}
-
-//TODO deprecated & unused
-void loop(void * pvParameters) {
-  if (wifiManager.isStarted()) {
-    if (messageSending && 
-        (millis() - last_send_ms) >= SENDING_INTERVAL &&
-        iotHubManager.isReady())
-    {
-      // Send environmental data
-      char messagePayload[MESSAGE_MAX_LEN];
-      float temperature = environmentSensorManager.readTemperature();
-      float humidity = environmentSensorManager.readHumidity();
-      snprintf(messagePayload, MESSAGE_MAX_LEN, MESSAGE_TEMPLATE, temperature,humidity);
-      logger.info(messagePayload);
-      iotHubManager.sendMessage(messagePayload);
-
-      iotHubManager.loop();
-
-      last_send_ms = millis();
-    }
-    else
-    {
-      //Esp32MQTTClient_Check();
-    }
-  }
-
-  //This should be 10 seconds -> make it named configurable variable with units
-  usleep(10000000);
 }

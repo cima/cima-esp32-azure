@@ -3,22 +3,11 @@
 
 namespace cima::system {
 
-    bool WireManager::initialized = false;
+    WireManager::WireManager(gpio_num_t sclPin, gpio_num_t sdaPin)
+            : sclPin(sclPin), sdaPin(sdaPin), 
+            i2cBus(I2C_NUM_0, sclPin, sdaPin) {};
 
-    WireManager::WireManager(uint32_t setBits, uint32_t resetBits) 
-            : setBits(setBits), resetBits(resetBits) {};
-
-    void WireManager::init() {
-        //TODO Wire.begin(setBits, resetBits);
-        initialized = true;
-    }
-
-    void *WireManager::getWire() {
-        if( ! initialized) {
-            throw ManagerNotInitializedException();
-        }
-
-        //TODO
-        return nullptr;
+    CI2CBus &WireManager::getWire() {
+        return i2cBus;
     }
 }
