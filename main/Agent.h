@@ -2,6 +2,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 #include <functional>
 
 #include "system/Log.h"
@@ -34,9 +35,10 @@ namespace cima {
             int justPrint(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
             int whatIsTheTime(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
 
+            void initFlashStorage();
             bool mountFlashFileSystem();
             void setupNetwork(system::WifiManager &wifiManager);
-            std::pair<std::string, std::string> readWifiCredentials();
+            std::list<system::WifiCredentials> readWifiCredentials();
 
             void mainLoop();
             void registerToMainLoop(std::function<void()> function);

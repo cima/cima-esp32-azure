@@ -1,12 +1,10 @@
-#include <stdlib.h>
 #include <string>
-#include <stdio.h>
-#include <time.h>
-
 #include <thread>
 #include <chrono>
 #include <memory>
 #include <functional>
+
+#include <driver/gpio.h>
 
 #include "system/Log.h"
 
@@ -19,23 +17,12 @@
 
 #include "Agent.h"
 
-#include "esp_timer.h"
-#include "esp_log.h"
-#include "esp_sleep.h"
-
-#include <freertos/FreeRTOS.h>
-#include <freertos/timers.h>
-#include <freertos/task.h>
-
-#include <driver/gpio.h>
-
 cima::system::Log logger("main");
 
 cima::system::WifiManager wifiManager;
 
 cima::system::WireManager wireManager(GPIO_NUM_15, GPIO_NUM_4 );
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
-
 
 std::string keyFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.pem";
 std::string certFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.crt";
@@ -48,19 +35,6 @@ cima::iot::IoTHubManager iotHubManager(connectionString, certificate);
 
 cima::Agent agent(iotHubManager, environmentSensorManager);
 
-#define SENDING_INTERVAL 10000
-#define MESSAGE_MAX_LEN 256
-
-const char *MESSAGE_TEMPLATE = "{\"greetings\":\"Hello world!\", \"Temperature\":%f, \"Humidity\":%f}";
-
-static bool messageSending = true;
-static uint64_t last_send_ms;
-
-int64_t millis(){
-  int64_t time_since_boot = esp_timer_get_time();
-  return time_since_boot;
-}
-
 extern "C" void app_main(void)
 {
   using namespace std::placeholders;
@@ -68,6 +42,8 @@ extern "C" void app_main(void)
   logger.init();
   logger.info("ESP32 Device");
   logger.info("Initializing...");
+
+  agent.initFlashStorage();
 
   if(agent.mountFlashFileSystem()){
     agent.cat("/spiffs/sheep.txt");
@@ -94,15 +70,12 @@ extern "C" void app_main(void)
     environmentSensorManager.readHumidity());
 
   std::string gizmo("Gizmo");
-  std::string sheep("Sheep");
-
   auto welcomeGizmo = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(gizmo));
+
+  std::string sheep("Sheep");
   auto welcomeSheep = std::thread(&cima::Agent::welcome, std::ref(agent), std::ref(sheep));
 
-  last_send_ms = millis();
-
   agent.mainLoop();
-
 
   welcomeGizmo.join();
   welcomeSheep.join();

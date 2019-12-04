@@ -14,6 +14,8 @@
 
 #include <esp_spiffs.h>
 #include <esp_err.h>
+#include <nvs_flash.h>
+#include <nvs.h>
 
 namespace cima {
 
@@ -98,6 +100,17 @@ namespace cima {
         return 200;
     }
 
+    void Agent::initFlashStorage(){
+        LOGGER.info("Initializing flash storage...");
+
+        esp_err_t ret = nvs_flash_init();
+        if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            ret = nvs_flash_init();
+        }
+        ESP_ERROR_CHECK(ret);
+    }
+
     bool Agent::mountFlashFileSystem(){
         esp_vfs_spiffs_conf_t conf = {
             .base_path = FLASH_FILESYSTEM_MOUNT_PATH.c_str(),
@@ -133,14 +146,20 @@ namespace cima {
     void Agent::setupNetwork(system::WifiManager &wifiManager){
         LOGGER.info(" > WiFi");
         auto credentials = std::move(readWifiCredentials());
-        wifiManager.resetNetwork(credentials.first, credentials.second);
+
+        for(auto network : credentials) {
+            LOGGER.info("Adding network: %s", network.getSsid().c_str());
+            wifiManager.addNetwork(network);
+        }
 
         wifiManager.start();
     }
 
-    std::pair<std::string, std::string> Agent::readWifiCredentials(){
+    std::list<system::WifiCredentials> Agent::readWifiCredentials(){
         std::ifstream in(FLASH_FILESYSTEM_MOUNT_PATH + "/connectivity/wifi.json");
         std::string wifiJson((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+
+        std::list<system::WifiCredentials> credentials;
 
         cJSON *root = cJSON_Parse(wifiJson.c_str());
         cJSON *networks = cJSON_GetObjectItem(root, "Networks");
@@ -150,13 +169,10 @@ namespace cima {
             auto ssid = cJSON_GetObjectItem(network, "SSID")->valuestring;
             auto passphrase = cJSON_GetObjectItem(network, "password")->valuestring;
 
-            //TODO for now we just support connectivity to one network or bust
-            return std::pair<std::string, std::string>(std::string(ssid), std::string(passphrase));
+            credentials.push_back(system::WifiCredentials(std::string(ssid), std::string(passphrase)));
         }
 
-        //TODO exception that we have not networks specified
-        LOGGER.error("No WI-fi networks specified.");
-        return std::pair<std::string, std::string>("internet", "");
+        return credentials;
     }
 
     void Agent::mainLoop(){

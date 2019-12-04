@@ -5,7 +5,6 @@
 #include <esp_system.h>
 #include <esp_wifi.h>
 #include <esp_event.h>
-#include <nvs_flash.h>
 
 #include <lwip/err.h>
 #include <lwip/sys.h>
@@ -17,25 +16,15 @@ namespace cima::system {
     Log WifiManager::LOG("WifiManager");
 
     WifiManager::WifiManager() 
-        : started(false), connected(false), ssid(""), passphrase("") {
+        : started(false), connected(false), networkIterator(networks.end()) {
     }
 
-    WifiManager::WifiManager(const std::string &ssid, const std::string &passphrase) 
-        : ssid(ssid), passphrase(passphrase) {
-    }
-
-    void WifiManager::resetNetwork(const std::string &ssid, const std::string &passphrase) {
-        this->ssid = ssid;
-        this->passphrase = passphrase;
-
-        if(started) {
-            //TODO disconnect and connect again
-        }
+    void WifiManager::addNetwork(const system::WifiCredentials &credentials){
+        this->credentials.push_back(credentials);
+        networkIterator = this->credentials.begin();
     }
 
     void WifiManager::start(){
-
-        initFlashStorage();
 
         LOG.info("Connecting...");
 
@@ -47,24 +36,21 @@ namespace cima::system {
         ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WifiManager::wifiEventHandlerWrapper, this));
         ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &WifiManager::ipEventHandlerWrapper, this));
 
-        initWifiStationConfig(ssid, passphrase);
+        initAccesspoint();
+    }
+
+    void WifiManager::initAccesspoint(){
+        if(networkIterator == this->credentials.end()) {
+            LOG.error("No networks defined.");
+            return;
+        }
+        initWifiStationConfig(networkIterator->getSsid(), networkIterator->getPassphrase());
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifiConfig) );
         ESP_ERROR_CHECK(esp_wifi_start());
         started = true;
 
         LOG.info("Wifi station started.");
-    }
-
-    void WifiManager::initFlashStorage(){
-        LOG.info("Initializing flash storage...");
-
-        esp_err_t ret = nvs_flash_init();
-        if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-            ESP_ERROR_CHECK(nvs_flash_erase());
-            ret = nvs_flash_init();
-        }
-        ESP_ERROR_CHECK(ret);
     }
 
     void WifiManager::wifiEventHandler(int32_t event_id, void* event_data) {
@@ -82,12 +68,27 @@ namespace cima::system {
                 }
 
                 connectionAttempts++;
-                LOG.info("retry to connect to the AP");
+                LOG.info("Retrying to connect to the AP");
             } else {
-                LOG.info("Connectin to the AP has failed");
+                LOG.info("Connectin to the AP '%s' has failed.", networkIterator->getSsid().c_str());
+
+                if(networkIterator != networks.end()){
+                    LOG.info("Trying another network.");
+                    tryNextNetwork();
+                } else {
+                    LOG.error("No more networks defined in list.");
+                }
+                
             }
             connected = false;
         }
+    }
+
+    void WifiManager::tryNextNetwork() {
+        ++networkIterator;
+        connectionAttempts = 0;
+        ESP_ERROR_CHECK(esp_wifi_stop());
+        initAccesspoint();
     }
 
     void WifiManager::ipEventHandler(int32_t event_id, void* event_data) {

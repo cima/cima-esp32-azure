@@ -2,6 +2,7 @@ set(COMPONENT_SRCS
     "CimaEsp32Agent.cpp"
     "Agent.h" "Agent.cpp"
     "system/Log.h" "system/Log.cpp"
+    "system/WifiCredentials.h" "system/WifiCredentials.cpp"
     "system/WifiManager.h" "system/WifiManager.cpp"
     "system/WireManager.h" "system/WireManager.cpp"
     "system/EnvironmentSensorManager.h" "system/EnvironmentSensorManager.cpp"
