@@ -23,14 +23,21 @@ namespace cima::iot {
 
     ::cima::system::Log IoTHubManager::LOGGER("IoTHubManager");
 
-    IoTHubManager::IoTHubManager(const std::string &connectionString, const CertSource &certificate) 
+    const char *IoTHubManager::CONNECTION_STRING_TEMPLATE = "HostName=%s;DeviceId=%s;x509=true";
+
+    IoTHubManager::IoTHubManager(const std::string &iotHubHostname, const CertSource &certificate) 
         : limiter(std::chrono::milliseconds(10)),
-        connectionString(connectionString),
         certificate(certificate), 
-        iotHubClientHandle(nullptr, &IoTHubManager::releaseIotHubHandle)
-        {}
+        iotHubHostname(iotHubHostname),
+        iotHubClientHandle(nullptr, &IoTHubManager::releaseIotHubHandle) {}
 
     void IoTHubManager::init() {
+        char buffer[512];
+        const std::string commonName = std::move(certificate.getCommonName());
+        sprintf(buffer, CONNECTION_STRING_TEMPLATE, iotHubHostname.c_str(), commonName.c_str());
+        connectionString = std::string(buffer);
+        LOGGER.info("Connection string to IoT hub: %s", connectionString.c_str());
+
         int result = IoTHub_Init();
         if(result){
              LOGGER.error("Init of IoT hub platform failed");

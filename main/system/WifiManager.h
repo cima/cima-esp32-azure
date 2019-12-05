@@ -14,6 +14,7 @@ namespace cima::system {
 class WifiManager {
 
     static Log LOG;
+
     bool started;
     bool connected;
 

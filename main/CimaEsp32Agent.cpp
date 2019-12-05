@@ -28,10 +28,8 @@ std::string keyFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cima
 std::string certFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.crt";
 cima::iot::CertSource certificate(keyFile, certFile);
 
-/*  "HostName=<host_name>;DeviceId=<device_id>;x509=true"                      */
-std::string connectionString("HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cimaesp32;x509=true");
-
-cima::iot::IoTHubManager iotHubManager(connectionString, certificate);
+std::string iotHubHostName("daedalus-iot-CDO-1.azure-devices.net");
+cima::iot::IoTHubManager iotHubManager(iotHubHostName, certificate);
 
 cima::Agent agent(iotHubManager, environmentSensorManager);
 
@@ -56,6 +54,7 @@ extern "C" void app_main(void)
   }
 
   logger.info(" > IoT Hub");
+  logger.info("Common name is: %s", certificate.getCommonName().c_str());
   iotHubManager.init();
   iotHubManager.registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, _1, _2, _3, _4));
   iotHubManager.registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, _1, _2, _3, _4));

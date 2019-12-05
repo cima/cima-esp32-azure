@@ -13,12 +13,24 @@ namespace cima::system {
 
     void Log::init() {
         if( ! started) {
-            //Serial.begin(115200);
             started = true;
         }
     }
 
-    void Log::info(const char* format, ...) {
+    void Log::debug(const char* format, ...) const {
+        char buffer [512];
+
+        va_list args;
+        va_start(args, format);
+   
+        vsnprintf(buffer, 511, format, args);
+
+        ESP_LOGI("DEBUG", "%s", buffer);
+
+        va_end(args);   
+    }
+
+    void Log::info(const char* format, ...) const {
         char buffer [512];
 
         va_list args;
@@ -31,7 +43,7 @@ namespace cima::system {
         va_end(args);   
     }
 
-    void Log::error(const char* format, ...) {
+    void Log::error(const char* format, ...) const {
         char buffer [512];
 
         va_list args;

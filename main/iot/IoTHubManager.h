@@ -20,7 +20,11 @@ namespace cima::iot {
 
         static ::cima::system::Log LOGGER;
 
+        static const char *CONNECTION_STRING_TEMPLATE;
+
         ::cima::system::ExecutionLimiter limiter;
+
+        const CertSource &certificate;
 
         /**
          * String containing Hostname, Device Id & Device Key in the format:                         
@@ -29,8 +33,7 @@ namespace cima::iot {
          *    "HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cima-esp32;SharedAccessKey=rgR/7coGtZn+5/7xHk3zrTHQ/5WwGuBj5QK9gmHqUl4=";
         */
         std::string connectionString;
-
-        const CertSource &certificate;
+        const std::string &iotHubHostname;
 
         static void releaseIotHubHandle(IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG *iotHubHandle);
         std::unique_ptr<IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG, decltype(&releaseIotHubHandle)> iotHubClientHandle;
@@ -40,7 +43,7 @@ namespace cima::iot {
         bool stopFlag = false;
 
     public:
-        IoTHubManager(const std::string &connectionString, const CertSource &certificate);
+        IoTHubManager(const std::string &iotHubHostname, const CertSource &certificate);
         void init();
         bool isReady();
         void sendMessage(const char *messagePayload);

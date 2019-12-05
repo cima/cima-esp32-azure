@@ -14,7 +14,8 @@ namespace cima::system {
         Log(const std::string &name) : loggerName(name) {};
 
         void init();
-        void info(const char* format, ...);
-        void error(const char* format, ...);
+        void debug(const char* format, ...) const;
+        void info(const char* format, ...) const;
+        void error(const char* format, ...) const;
     };
 }
