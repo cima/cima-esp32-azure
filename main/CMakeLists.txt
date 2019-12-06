@@ -1,6 +1,7 @@
 set(COMPONENT_SRCS
     "CimaEsp32Agent.cpp"
     "Agent.h" "Agent.cpp"
+    "GreetingService.h" "GreetingService.cpp"
     "system/Log.h" "system/Log.cpp"
     "system/WifiCredentials.h" "system/WifiCredentials.cpp"
     "system/WifiManager.h" "system/WifiManager.cpp"
@@ -9,6 +10,7 @@ set(COMPONENT_SRCS
     "system/ManagerNotInitializedException.h"
     "system/ExecutionLimiter.h" "system/ExecutionLimiter.cpp"
     "iot/CertSource.cpp" "iot/CertSource.h"
+    "iot/AzureConfig.cpp" "iot/AzureConfig.h"
     "iot/IotHubManager.cpp" "iot/IotHubManager.h"
     ${AZURE_IOT_SDK}/certs/certs.c
 )

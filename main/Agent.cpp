@@ -19,48 +19,9 @@
 
 namespace cima {
 
-    system::Log Agent::LOGGER("Agent");
+    const system::Log Agent::LOGGER("Agent");
 
     std::string Agent::FLASH_FILESYSTEM_MOUNT_PATH = "/spiffs";
-
-    std::string Agent::MESSAGE_TEMPLATE = "{\
-        \"greetings\":\"Hello %s!\", \
-        \"Temperature\":%f, \
-        \"Humidity\":%f, \
-        \"PressurehPa\": %f, \
-        \"Timestamp\":\"%s\"}";
-
-    Agent::Agent(iot::IoTHubManager &iotHubManager, system::EnvironmentSensorManager &environmentSensorManager) 
-        : iotHubManager(iotHubManager), environmentSensorManager(environmentSensorManager){}
-
-    void Agent::welcome(std::string &visitorName){
-        while(keepRunning){
-
-            auto end = std::chrono::system_clock::now();
-            std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-            char greeting[256];
-            sprintf(greeting, MESSAGE_TEMPLATE.c_str(), 
-                visitorName.c_str(), 
-                environmentSensorManager.readTemperature(), 
-                environmentSensorManager.readHumidity(),
-                environmentSensorManager.readPressure(),
-                std::ctime(&end_time)
-            );
-
-            LOGGER.info(":-) Hello %s :-) %f °C, %f %%, %f hPa", 
-                visitorName.c_str(),
-                environmentSensorManager.readTemperature(), 
-                environmentSensorManager.readHumidity(),
-                environmentSensorManager.readPressure()
-            );
-            if(iotHubManager.isReady()) {
-                iotHubManager.sendMessage(greeting);
-            }
-
-            std::this_thread::sleep_for(std::chrono::seconds(30));
-        }
-    }
 
     void Agent::cat(const std::string &filename){
         FILE* f = fopen(filename.c_str(), "r");
@@ -173,6 +134,24 @@ namespace cima {
         }
 
         return credentials;
+    }
+
+    iot::AzureConfig Agent::readAzureConfig() {
+        std::ifstream in(FLASH_FILESYSTEM_MOUNT_PATH + "/connectivity/azure.json");
+        std::string azureJson((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+
+        iot::AzureConfig config;
+
+        cJSON *root = cJSON_Parse(azureJson.c_str());
+
+        cJSON *dps = cJSON_GetObjectItem(root, "DeviceProvisioningServices");
+        config.setDpsHostname(std::string(cJSON_GetObjectItem(dps, "HostName")->valuestring));
+        config.setDpsScopeId(std::string(cJSON_GetObjectItem(dps, "scopeID")->valuestring));
+
+        cJSON *iotHub = cJSON_GetObjectItem(root, "IoTHub");
+        config.setIotHubHostname(std::string(cJSON_GetObjectItem(iotHub, "HostName")->valuestring));
+
+        return std::move(config);
     }
 
     void Agent::mainLoop(){

@@ -127,10 +127,6 @@ namespace cima::iot {
         }
     }
 
-    void IoTHubManager::stop(){
-        stopFlag = true;
-    }
-
     // BEGIN ---------- Send confirmation callback section ----------------
     void IoTHubManager::sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result) {
         if (result == IOTHUB_CLIENT_CONFIRMATION_OK) {

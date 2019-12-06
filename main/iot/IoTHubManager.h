@@ -30,9 +30,9 @@ namespace cima::iot {
          * String containing Hostname, Device Id & Device Key in the format:                         
          *    "HostName=<host_name>;DeviceId=<device_id>;SharedAccessKey=<device_key>"               
          *    "HostName=<host_name>;DeviceId=<device_id>;SharedAccessSignature=<device_sas_token>"
-         *    "HostName=daedalus-iot-CDO-1.azure-devices.net;DeviceId=cima-esp32;SharedAccessKey=rgR/7coGtZn+5/7xHk3zrTHQ/5WwGuBj5QK9gmHqUl4=";
         */
         std::string connectionString;
+
         const std::string &iotHubHostname;
 
         static void releaseIotHubHandle(IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG *iotHubHandle);
@@ -44,14 +44,18 @@ namespace cima::iot {
 
     public:
         IoTHubManager(const std::string &iotHubHostname, const CertSource &certificate);
+
+        void setHostname(const std::string &iotHubHostname);
+        void setIdentity(CertSource &certificate);
         void init();
+
         bool isReady();
         void sendMessage(const char *messagePayload);
         void loop();
-        void stop();
 
         void registerMethod(const std::string &methodName, IotHubClientMethod method);
 
+    private:
         void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result);
         void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payLoad, size_t size);
         IOTHUBMESSAGE_DISPOSITION_RESULT messageCallback(IOTHUB_MESSAGE_HANDLE message);
