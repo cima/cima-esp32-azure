@@ -59,13 +59,13 @@ extern "C" void app_main(void)
   auto azureConfig = agent.readAzureConfig();
   logger.info("IoT hub Hostname: %s", azureConfig.getIotHubHostname().c_str());
 
-  cima::iot::IoTHubManager iotHubManager(azureConfig.getIotHubHostname(), certificate);
+  std::shared_ptr<cima::iot::IoTHubManager> iotHubManager(new cima::iot::IoTHubManager(azureConfig.getIotHubHostname(), certificate));
 
-  iotHubManager.init();
-  iotHubManager.registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, _1, _2, _3, _4));
-  iotHubManager.registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, _1, _2, _3, _4));
+  iotHubManager->init();
+  iotHubManager->registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, _1, _2, _3, _4));
+  iotHubManager->registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, _1, _2, _3, _4));
 
-  agent.registerToMainLoop(std::bind(&cima::iot::IoTHubManager::loop, &iotHubManager));
+  agent.registerToMainLoop(std::bind(&cima::iot::IoTHubManager::loop, iotHubManager));
 
   logger.info(" > Environment sensor");
   environmentSensorManager.init();
@@ -74,13 +74,13 @@ extern "C" void app_main(void)
     environmentSensorManager.readTemperature(), 
     environmentSensorManager.readHumidity());
 
-  cima::GreetingService greetingService(iotHubManager, environmentSensorManager);
+  std::shared_ptr<cima::GreetingService> greetingService(new cima::GreetingService(*iotHubManager, environmentSensorManager));
 
   std::string gizmo("Gizmo");
-  auto welcomeGizmo = std::thread(&cima::GreetingService::welcome, std::ref(greetingService), std::ref(gizmo));
+  auto welcomeGizmo = std::thread(&cima::GreetingService::welcome, std::ref(*greetingService), std::ref(gizmo));
 
   std::string sheep("Sheep");
-  auto welcomeSheep = std::thread(&cima::GreetingService::welcome, std::ref(greetingService), std::ref(sheep));
+  auto welcomeSheep = std::thread(&cima::GreetingService::welcome, std::ref(*greetingService), std::ref(sheep));
 
   agent.mainLoop();
 
