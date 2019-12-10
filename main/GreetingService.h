@@ -14,9 +14,15 @@ namespace cima {
 
         bool keepRunning = true;
 
+        static const gpio_num_t LED_GPIO_PIN;
+
     public:
         GreetingService(iot::IoTHubManager &iotHubManager, system::EnvironmentSensorManager &environmentSensorManager);
+
+        void initLed();
+
         void welcome(std::string &visitorName);
+        void welcomeLoop(std::string &visitorName);
 
         void stop();
     };

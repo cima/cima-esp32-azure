@@ -11,6 +11,8 @@
 #include "system/WifiManager.h"
 #include "system/WireManager.h"
 #include "system/EnvironmentSensorManager.h"
+#include "system/ButtonController.h"
+#include "system/SpecialThreadFactory.h"
 
 #include "iot/CertSource.h"
 #include "iot/AzureConfig.h"
@@ -20,11 +22,13 @@
 #include "GreetingService.h"
 
 cima::system::Log logger("main");
+cima::system::SpecialThreadFactory threadFactory(4096);
 
 cima::system::WifiManager wifiManager;
 
 cima::system::WireManager wireManager(GPIO_NUM_15, GPIO_NUM_4 );
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
+cima::system::ButtonController buttonController(GPIO_NUM_0);
 
 //TODO find certificate in folder instead of fixed path
 std::string keyFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.pem";
@@ -61,11 +65,15 @@ extern "C" void app_main(void)
 
   std::shared_ptr<cima::iot::IoTHubManager> iotHubManager(new cima::iot::IoTHubManager(azureConfig.getIotHubHostname(), certificate));
 
-  iotHubManager->init();
-  iotHubManager->registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, _1, _2, _3, _4));
-  iotHubManager->registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, _1, _2, _3, _4));
+  iotHubManager->connect();
+  
+  iotHubManager->registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, 
+    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+  
+  iotHubManager->registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, 
+    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
-  agent.registerToMainLoop(std::bind(&cima::iot::IoTHubManager::loop, iotHubManager));
+  agent.registerToMainLoop(std::bind(&cima::iot::IoTHubManager::loop, iotHubManager.get()));
 
   logger.info(" > Environment sensor");
   environmentSensorManager.init();
@@ -77,14 +85,27 @@ extern "C" void app_main(void)
   std::shared_ptr<cima::GreetingService> greetingService(new cima::GreetingService(*iotHubManager, environmentSensorManager));
 
   std::string gizmo("Gizmo");
-  auto welcomeGizmo = std::thread(&cima::GreetingService::welcome, std::ref(*greetingService), std::ref(gizmo));
+  auto welcomeGizmo = std::thread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(gizmo));
 
   std::string sheep("Sheep");
-  auto welcomeSheep = std::thread(&cima::GreetingService::welcome, std::ref(*greetingService), std::ref(sheep));
+  //auto welcomeSheep = std::thread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(sheep));
+  auto welcomeSheep = threadFactory.createThread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(sheep));
 
-  agent.mainLoop();
+  std::string button("Button");
+  auto buttonFunc = std::bind(&cima::GreetingService::welcome, greetingService, std::ref(button));
+  logger.info("Test calling the button handler");
+  buttonFunc();
+  logger.info("Registering button handler");
+  buttonController.initButton();
+  buttonController.addHandler(buttonFunc);
+  agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
 
+  logger.info(" > Main loop");
+  
+  auto mainLoopThread = std::thread(&cima::Agent::mainLoop, std::ref(agent));
+
+  mainLoopThread.join();
   welcomeGizmo.join();
-  welcomeSheep.join();
+  welcomeSheep->join();
 
 }

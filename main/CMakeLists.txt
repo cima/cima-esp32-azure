@@ -6,6 +6,7 @@ set(COMPONENT_SRCS
     "system/WifiCredentials.h" "system/WifiCredentials.cpp"
     "system/WifiManager.h" "system/WifiManager.cpp"
     "system/WireManager.h" "system/WireManager.cpp"
+    "system/ButtonController.h" "system/ButtonController.cpp"
     "system/EnvironmentSensorManager.h" "system/EnvironmentSensorManager.cpp"
     "system/ManagerNotInitializedException.h"
     "system/ExecutionLimiter.h" "system/ExecutionLimiter.cpp"
@@ -21,6 +22,11 @@ enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
+
+# Boost
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
 
 # Azure SDK C specialities
 include_directories(${AZURE_IOT_SDK}/certs)

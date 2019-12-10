@@ -51,7 +51,7 @@ namespace cima::system {
    
         vsnprintf(buffer, 511, format, args);
 
-        ESP_LOGE("INFO", "%s", buffer);
+        ESP_LOGE("ERROR", "%s", buffer);
 
         va_end(args);   
     }

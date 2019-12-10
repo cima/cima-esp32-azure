@@ -65,6 +65,10 @@ namespace cima::system {
                 auto kickReason = (wifi_event_sta_disconnected_t *)event_data;
                 if(kickReason) {
                     LOG.info("Kick reason: %d", kickReason->reason);
+                    if(kickReason->reason == WIFI_REASON_NO_AP_FOUND){
+                        LOG.info("Network %s not found. Trying next one.", networkIterator->getSsid().c_str());
+                        tryNextNetwork();
+                    }
                 }
 
                 connectionAttempts++;

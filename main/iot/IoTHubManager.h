@@ -25,6 +25,8 @@ namespace cima::iot {
         ::cima::system::ExecutionLimiter limiter;
 
         const CertSource &certificate;
+        std::string pemCertificate;
+        std::string pemPrivateKey;
 
         /**
          * String containing Hostname, Device Id & Device Key in the format:                         
@@ -40,6 +42,8 @@ namespace cima::iot {
 
         std::map<std::string, IotHubClientMethod> methods;
 
+        bool connected = false;
+
         bool stopFlag = false;
 
     public:
@@ -47,7 +51,7 @@ namespace cima::iot {
 
         void setHostname(const std::string &iotHubHostname);
         void setIdentity(CertSource &certificate);
-        void init();
+        void connect();
 
         bool isReady();
         void sendMessage(const char *messagePayload);

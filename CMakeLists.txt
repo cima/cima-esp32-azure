@@ -17,8 +17,8 @@ set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_C_FLAGS -mlongcalls ${CMAKE_C_FLAGS})
 set(CMAKE_CXX_FLAGS -mlongcalls ${CMAKE_CXX_FLAGS})
 
-find_package(BOOST)
-
+cmake_policy(SET CMP0074 NEW)
+find_package(Boost)
 
 # Azure imports
 # -------------

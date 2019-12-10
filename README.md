@@ -1,11 +1,13 @@
 # HW info
 
 ## Board info
-[TTGO LoRa32 OLED](https://hackaday.io/project/27791-esp32-lora-oled-module)
-[Manufacturer data sheet](http://www.lilygo.cn/prod_view.aspx?TypeId=50032&Id=1152)
+- [LILYGO® 4M Byte (32M bit )Pro ESP32 OLED V2.0 TTGO](http://www.lilygo.cn/prod_view.aspx?TypeId=50032&Id=1152) Manufacturer data sheet
+- [TTGO LoRa32 OLED](https://hackaday.io/project/27791-esp32-lora-oled-module) usefull fan page.
+
+![](./Lilygo-TTGO-wiring.jpg)
 
 ## Sesnsor info
-https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
+- [Adafruit BME280](https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf)
 
 # Development info
 
@@ -14,11 +16,10 @@ https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
 
 # Environment setup
 - [Visual studio code](https://code.visualstudio.com/)
-  - https://github.com/Deous/VSC-Guide-for-esp32
+  - [Setting up Visual Studio Code for ESP32 IDF (FreeRTOS)](https://github.com/Deous/VSC-Guide-for-esp32) (Contains references and advices for older version of ESP-IDF)
 - git
 
 ## Dependencies
-
 
 ### ESP 4.0 (beta 2)
 - [Getting started ESP 4.0 (beta 2)](https://docs.espressif.com/projects/esp-idf/en/v4.0-beta2/get-started/index.html)
@@ -45,8 +46,6 @@ and define environment variable named `AZURE_SDK_C_PATH` pointing to the above c
 
 ### Misc
 
-- Adafruit drivers for Arduino
-  - Patch adafruit driver
 - [Disable FreeRTOS static allocation API](https://esp32.com/viewtopic.php?t=3504) set in [sdkconfig.defaults](sdkconfig.defaults)
 - [Quartz & Bitrate settings](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html#get-started-connect)
 
@@ -60,9 +59,9 @@ and define environment variable named `IOT_SOLUTION_PATH` pointing to the above 
 
 In (./CMakeLists.txt) we use a little dirty trick where we only define and use those drives we care of because the rest is highly incompatible with ESP-IDF 4.0 Beta2.
 
-### Wire
-
 # Deprecated
 
 ## Arduino like
 - clone with submodules https://github.com/espressif/esp-azure to c:/Users/z608328/AppData/Local/Arduino15/packages/esp32/hardware/esp32/1.0.1/libraries/esp-azure/
+- Adafruit drivers for Arduino
+  - Patch adafruit driver

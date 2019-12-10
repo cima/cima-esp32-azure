@@ -31,7 +31,7 @@ namespace cima::iot {
         iotHubHostname(iotHubHostname),
         iotHubClientHandle(nullptr, &IoTHubManager::releaseIotHubHandle) {}
 
-    void IoTHubManager::init() {
+    void IoTHubManager::connect() {
         char buffer[512];
         const std::string commonName = std::move(certificate.getCommonName());
         sprintf(buffer, CONNECTION_STRING_TEMPLATE, iotHubHostname.c_str(), commonName.c_str());
@@ -50,9 +50,12 @@ namespace cima::iot {
         IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_TRUSTED_CERT, certificates);
 #endif
 
+        pemCertificate = std::move(certificate.getPemCertificate());
+        pemPrivateKey = std::move(certificate.getPemPrivateKey());
+
         if ( ! iotHubClientHandle ||
-            (IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_X509_CERT, certificate.getPemCertificate().c_str()) != IOTHUB_CLIENT_OK) ||
-            (IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_X509_PRIVATE_KEY, certificate.getPemPrivateKey().c_str()) != IOTHUB_CLIENT_OK)
+            (IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_X509_CERT, pemCertificate.c_str()) != IOTHUB_CLIENT_OK) ||
+            (IoTHubDeviceClient_LL_SetOption(iotHubClientHandle.get(), OPTION_X509_PRIVATE_KEY, pemPrivateKey.c_str()) != IOTHUB_CLIENT_OK)
         ){
             LOGGER.error("failure to set options for x509, aborting");
             iotHubClientHandle.reset();
@@ -89,7 +92,7 @@ namespace cima::iot {
     }
 
     bool IoTHubManager::isReady() {
-        return (bool)iotHubClientHandle;
+        return connected;
     }
 
     void IoTHubManager::sendMessage(const char *messagePayload) {
@@ -221,8 +224,10 @@ namespace cima::iot {
     // BEGIN -------- connection status callback section ------------------
     void IoTHubManager::connectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS status, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason){
         LOGGER.info("IoT hub connection status: %s (%s)",
-         status == IOTHUB_CLIENT_CONNECTION_AUTHENTICATED ? "Authenticated" : "Not-Authenticated", 
-         IOTHUB_CLIENT_CONNECTION_STATUS_REASONStrings(reason));
+            status == IOTHUB_CLIENT_CONNECTION_AUTHENTICATED ? "Authenticated" : "Not-Authenticated", 
+            IOTHUB_CLIENT_CONNECTION_STATUS_REASONStrings(reason));
+
+        connected = status == IOTHUB_CLIENT_CONNECTION_AUTHENTICATED;
     }
 
     void IoTHubManager::connectionStatusCallbackWrapper(IOTHUB_CLIENT_CONNECTION_STATUS status, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* userContext){
