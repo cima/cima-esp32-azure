@@ -9,11 +9,6 @@
 ## Sesnsor info
 - [Adafruit BME280](https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf)
 
-# Development info
-
-## Azure IoT Hub
-- https://github.com/Azure/azure-iot-sdk-c/blob/350b51f5abaedc975dae5419ad1fa4add7635fd2/iothub_client/samples/iothub_ll_client_x509_sample/iothub_ll_client_x509_sample.c
-
 # Environment setup
 - [Visual studio code](https://code.visualstudio.com/)
   - [Setting up Visual Studio Code for ESP32 IDF (FreeRTOS)](https://github.com/Deous/VSC-Guide-for-esp32) (Contains references and advices for older version of ESP-IDF)
@@ -39,6 +34,8 @@
     git submodule update --init --recursive
 ```
 and define environment variable named `AZURE_SDK_C_PATH` pointing to the above cloned directory.
+
+- [Azure IoT Hub example](https://github.com/Azure/azure-iot-sdk-c/blob/350b51f5abaedc975dae5419ad1fa4add7635fd2/iothub_client/samples/iothub_ll_client_x509_sample/iothub_ll_client_x509_sample.c)
 
 ### BOOST
 - [Getting started with boost](https://www.boost.org/doc/libs/1_71_0/more/getting_started/windows.html)
