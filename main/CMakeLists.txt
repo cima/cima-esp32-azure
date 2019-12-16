@@ -13,6 +13,7 @@ set(COMPONENT_SRCS
     "iot/CertSource.cpp" "iot/CertSource.h"
     "iot/AzureConfig.cpp" "iot/AzureConfig.h"
     "iot/IotHubManager.cpp" "iot/IotHubManager.h"
+    "iot/DeviceProvisioningClient.cpp" "iot/DeviceProvisioningClient.h"
     ${AZURE_IOT_SDK}/certs/certs.c
 )
 

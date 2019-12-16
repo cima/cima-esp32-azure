@@ -12,17 +12,16 @@
 #include "system/WireManager.h"
 #include "system/EnvironmentSensorManager.h"
 #include "system/ButtonController.h"
-#include "system/SpecialThreadFactory.h"
 
 #include "iot/CertSource.h"
 #include "iot/AzureConfig.h"
 #include "iot/IoTHubManager.h"
+#include "iot/DeviceProvisioningClient.h"
 
 #include "Agent.h"
 #include "GreetingService.h"
 
 cima::system::Log logger("main");
-cima::system::SpecialThreadFactory threadFactory(4096);
 
 cima::system::WifiManager wifiManager;
 
@@ -34,6 +33,8 @@ cima::system::ButtonController buttonController(GPIO_NUM_0);
 std::string keyFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.pem";
 std::string certFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.crt";
 cima::iot::CertSource certificate(keyFile, certFile);
+
+cima::iot::DeviceProvisioningClient dpsClient(certificate);
 
 cima::Agent agent;
 
@@ -56,11 +57,17 @@ extern "C" void app_main(void)
     logger.info("Waiting for network");
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+  
+  logger.info(" > Azure config file");
+  auto azureConfig = agent.readAzureConfig();
+
+  logger.info(" > DPS client");
+  cima::iot::DeviceProvisioningClient::initSingleton(&dpsClient);
+  //dpsClient.connect() 
 
   logger.info(" > IoT Hub");
   logger.info("Common name is: %s", certificate.getCommonName().c_str());
 
-  auto azureConfig = agent.readAzureConfig();
   logger.info("IoT hub Hostname: %s", azureConfig.getIotHubHostname().c_str());
 
   std::shared_ptr<cima::iot::IoTHubManager> iotHubManager(new cima::iot::IoTHubManager(azureConfig.getIotHubHostname(), certificate));
@@ -89,7 +96,7 @@ extern "C" void app_main(void)
 
   std::string sheep("Sheep");
   //auto welcomeSheep = std::thread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(sheep));
-  auto welcomeSheep = threadFactory.createThread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(sheep));
+  auto welcomeSheep = std::thread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(sheep));
 
   std::string button("Button");
   auto buttonFunc = std::bind(&cima::GreetingService::welcome, greetingService, std::ref(button));
@@ -106,6 +113,6 @@ extern "C" void app_main(void)
 
   mainLoopThread.join();
   welcomeGizmo.join();
-  welcomeSheep->join();
+  welcomeSheep.join();
 
 }
