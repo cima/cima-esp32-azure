@@ -18,6 +18,7 @@ namespace cima::system {
 
     public:
         WireManager(gpio_num_t sclPin, gpio_num_t sdaPin);
+        WireManager(i2c_port_t port, gpio_num_t sclPin, gpio_num_t sdaPin);
         CI2CBus &getWire();
     };
 }

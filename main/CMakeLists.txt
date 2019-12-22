@@ -14,6 +14,7 @@ set(COMPONENT_SRCS
     "iot/AzureConfig.cpp" "iot/AzureConfig.h"
     "iot/IotHubManager.cpp" "iot/IotHubManager.h"
     "iot/DeviceProvisioningClient.cpp" "iot/DeviceProvisioningClient.h"
+    "display/Display.h" "display/Display.cpp"
     ${AZURE_IOT_SDK}/certs/certs.c
 )
 
@@ -23,6 +24,8 @@ enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
+
+component_compile_definitions(CORE_DEBUG_LEVEL=4)
 
 # Boost
 if(Boost_FOUND)
@@ -35,6 +38,6 @@ add_definitions(-DSET_TRUSTED_CERT_IN_SAMPLES)
 component_compile_definitions(SET_TRUSTED_CERT_IN_SAMPLES)
 
 # ESP32 IoT solutions
-set(COMPONENT_REQUIRES bme280)
+set(COMPONENT_REQUIRES bme280 ssd1306)
 
 spiffs_create_partition_image(storage ../filesystem FLASH_IN_PROJECT)

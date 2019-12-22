@@ -5,6 +5,7 @@
 #include <functional>
 
 #include <driver/gpio.h>
+#include <iot_ssd1306.h>
 
 #include "system/Log.h"
 
@@ -18,6 +19,8 @@
 #include "iot/IoTHubManager.h"
 #include "iot/DeviceProvisioningClient.h"
 
+#include "display/Display.h"
+
 #include "Agent.h"
 #include "GreetingService.h"
 
@@ -25,7 +28,7 @@ cima::system::Log logger("main");
 
 cima::system::WifiManager wifiManager;
 
-cima::system::WireManager wireManager(GPIO_NUM_15, GPIO_NUM_4 );
+cima::system::WireManager wireManager(OLED_IIC_NUM, GPIO_NUM_15, GPIO_NUM_4);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
 cima::system::ButtonController buttonController(GPIO_NUM_0);
 
@@ -37,6 +40,9 @@ cima::iot::CertSource certificate(keyFile, certFile);
 cima::iot::DeviceProvisioningClient dpsClient(certificate);
 
 cima::Agent agent;
+
+bool azureConnected;
+std::shared_ptr<cima::iot::IoTHubManager> iotHubManagerPtr;
 
 extern "C" void app_main(void)
 {
@@ -51,6 +57,18 @@ extern "C" void app_main(void)
   if(agent.mountFlashFileSystem()){
     agent.cat("/spiffs/sheep.txt");
   }
+
+  auto mainLoopThread = std::thread(&cima::Agent::mainLoop, std::ref(agent));
+
+  cima::display::Display display(wireManager, GPIO_NUM_16);
+  agent.registerToMainLoop(
+    [&]() {
+      display.showTemperature(environmentSensorManager.readTemperature(), 
+      environmentSensorManager.readHumidity(),
+      environmentSensorManager.readPressure(),
+      wifiManager.isConnected(), 
+      iotHubManagerPtr && iotHubManagerPtr->isReady());
+    });
 
   agent.setupNetwork(wifiManager);
   while( ! wifiManager.isConnected()){
@@ -71,7 +89,7 @@ extern "C" void app_main(void)
   logger.info("IoT hub Hostname: %s", azureConfig.getIotHubHostname().c_str());
 
   std::shared_ptr<cima::iot::IoTHubManager> iotHubManager(new cima::iot::IoTHubManager(azureConfig.getIotHubHostname(), certificate));
-
+  iotHubManagerPtr = iotHubManager;
   iotHubManager->connect();
   
   iotHubManager->registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, 
@@ -108,8 +126,6 @@ extern "C" void app_main(void)
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
 
   logger.info(" > Main loop");
-  
-  auto mainLoopThread = std::thread(&cima::Agent::mainLoop, std::ref(agent));
 
   mainLoopThread.join();
   welcomeGizmo.join();
