@@ -6,6 +6,9 @@
 
 #include <esp_event_base.h>
 #include <esp_wifi.h>
+
+#include <boost/signals2/signal.hpp>
+
 #include "Log.h"
 #include "WifiCredentials.h"
 
@@ -28,6 +31,9 @@ class WifiManager {
     std::list<system::WifiCredentials> networks;
     std::list<system::WifiCredentials>::iterator networkIterator;
 
+    boost::signals2::signal<void ()> networkUpSignal;
+    boost::signals2::signal<void ()> networkDownSignal;
+
 public:
     WifiManager();
 
@@ -42,6 +48,10 @@ public:
     bool isStarted();
     bool isConnected();
 
+    void registerNetworkUpHandler(std::function<void(void)> func);
+    void registerNetworkDownHandler(std::function<void(void)> func);
+
+private:
     void wifiEventHandler(int32_t event_id, void* event_data);
     void ipEventHandler(int32_t event_id, void* event_data);
 

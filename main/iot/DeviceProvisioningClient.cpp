@@ -9,6 +9,10 @@ namespace cima::iot {
 
     DeviceProvisioningClient::DeviceProvisioningClient(const CertSource &certSource) : certSource(certSource) {}
 
+    void DeviceProvisioningClient::connect() {
+        //TODO
+    }
+
     const HSM_CLIENT_X509_INTERFACE *DeviceProvisioningClient::getAzureHsmCallbacks() {
         if( ! globalSingleton) {
             return nullptr;

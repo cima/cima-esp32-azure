@@ -1,6 +1,7 @@
 #include "WifiManager.h"
 #include <functional>
 #include <cstring>
+#include <thread>
 
 #include <esp_system.h>
 #include <esp_wifi.h>
@@ -101,6 +102,14 @@ namespace cima::system {
             LOG.info("got ip:" IPSTR, IP2STR(&event->ip_info.ip));
             connectionAttempts = 0;
             connected = true;
+            auto signalThread = std::thread([&](){networkUpSignal();});
+            signalThread.join();
+        } else if (event_id == IP_EVENT_STA_LOST_IP) {
+            LOG.info("Wi-Fi connectivity lost");
+            connectionAttempts = 0;
+            connected = false;
+            auto signalThread = std::thread([&](){networkDownSignal();});
+            signalThread.join();
         }
     }
 
@@ -110,7 +119,14 @@ namespace cima::system {
 
     bool WifiManager::isConnected(){
         return connected;
-;
+    }
+
+    void WifiManager::registerNetworkUpHandler(std::function<void(void)> func){
+        networkUpSignal.connect(func);
+    }
+
+    void WifiManager::registerNetworkDownHandler(std::function<void(void)> func){
+        networkDownSignal.connect(func);
     }
 
     void WifiManager::wifiEventHandlerWrapper(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {

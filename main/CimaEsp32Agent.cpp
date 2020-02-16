@@ -58,8 +58,6 @@ extern "C" void app_main(void)
     agent.cat("/spiffs/sheep.txt");
   }
 
-  auto mainLoopThread = std::thread(&cima::Agent::mainLoop, std::ref(agent));
-
   cima::display::Display display(wireManager, GPIO_NUM_16);
   agent.registerToMainLoop(
     [&]() {
@@ -71,17 +69,16 @@ extern "C" void app_main(void)
     });
 
   agent.setupNetwork(wifiManager);
-  while( ! wifiManager.isConnected()){
-    logger.info("Waiting for network");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
+
   
   logger.info(" > Azure config file");
   auto azureConfig = agent.readAzureConfig();
 
+
   logger.info(" > DPS client");
   cima::iot::DeviceProvisioningClient::initSingleton(&dpsClient);
-  //dpsClient.connect() 
+  dpsClient.connect();
+  
 
   logger.info(" > IoT Hub");
   logger.info("Common name is: %s", certificate.getCommonName().c_str());
@@ -90,7 +87,6 @@ extern "C" void app_main(void)
 
   std::shared_ptr<cima::iot::IoTHubManager> iotHubManager(new cima::iot::IoTHubManager(azureConfig.getIotHubHostname(), certificate));
   iotHubManagerPtr = iotHubManager;
-  iotHubManager->connect();
   
   iotHubManager->registerMethod("justPrint", std::bind(&cima::Agent::justPrint, &agent, 
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
@@ -98,7 +94,10 @@ extern "C" void app_main(void)
   iotHubManager->registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, 
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
-  agent.registerToMainLoop(std::bind(&cima::iot::IoTHubManager::loop, iotHubManager.get()));
+  agent.registerToMainLoop([&](){iotHubManager->loop();});
+  wifiManager.registerNetworkUpHandler([&](){iotHubManager->connect();});
+  wifiManager.registerNetworkDownHandler([&](){iotHubManager->close();});
+  wifiManager.start();
 
   logger.info(" > Environment sensor");
   environmentSensorManager.init();
@@ -113,21 +112,22 @@ extern "C" void app_main(void)
   auto welcomeGizmo = std::thread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(gizmo));
 
   std::string sheep("Sheep");
-  //auto welcomeSheep = std::thread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(sheep));
   auto welcomeSheep = std::thread(&cima::GreetingService::welcomeLoop, std::ref(*greetingService), std::ref(sheep));
 
   std::string button("Button");
   auto buttonFunc = std::bind(&cima::GreetingService::welcome, greetingService, std::ref(button));
+  
   logger.info("Test calling the button handler");
   buttonFunc();
+
   logger.info("Registering button handler");
   buttonController.initButton();
   buttonController.addHandler(buttonFunc);
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
 
   logger.info(" > Main loop");
+  agent.mainLoop();
 
-  mainLoopThread.join();
   welcomeGizmo.join();
   welcomeSheep.join();
 

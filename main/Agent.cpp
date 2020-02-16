@@ -112,8 +112,6 @@ namespace cima {
             LOGGER.info("Adding network: %s", network.getSsid().c_str());
             wifiManager.addNetwork(network);
         }
-
-        wifiManager.start();
     }
 
     std::list<system::WifiCredentials> Agent::readWifiCredentials(){

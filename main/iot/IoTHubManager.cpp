@@ -91,6 +91,11 @@ namespace cima::iot {
         }
     }
 
+    void IoTHubManager::close() {
+        iotHubClientHandle.reset();
+        connected = false;
+    }
+
     bool IoTHubManager::isReady() {
         return connected;
     }
@@ -122,11 +127,12 @@ namespace cima::iot {
             return;
         }
 
+
         if(iotHubClientHandle){
             //TODO log trace
             IoTHubDeviceClient_LL_DoWork(iotHubClientHandle.get());
-        }else{
-            LOGGER.error("missing iotHubClientHandle");
+        }else if(connected) {
+          LOGGER.error("missing iotHubClientHandle");   
         }
     }
 

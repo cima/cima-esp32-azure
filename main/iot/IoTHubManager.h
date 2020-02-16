@@ -52,6 +52,7 @@ namespace cima::iot {
         void setHostname(const std::string &iotHubHostname);
         void setIdentity(CertSource &certificate);
         void connect();
+        void close();
 
         bool isReady();
         void sendMessage(const char *messagePayload);

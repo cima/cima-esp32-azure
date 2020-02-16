@@ -18,6 +18,7 @@ namespace cima::iot {
 
     public:
         DeviceProvisioningClient(const CertSource &certSource);
+        void connect();
 
         const static HSM_CLIENT_X509_INTERFACE *getAzureHsmCallbacks();
 

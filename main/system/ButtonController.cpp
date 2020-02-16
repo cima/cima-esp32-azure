@@ -12,6 +12,7 @@ namespace cima::system {
         io_conf.pin_bit_mask = 1ULL << buttonGpioPin;    
         io_conf.mode = GPIO_MODE_INPUT;
         io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+        io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
 
         esp_err_t gpioError = gpio_config(&io_conf);
         LOGGER.debug("Po globál dobrý 0x%x", gpioError);
@@ -41,6 +42,10 @@ namespace cima::system {
 
     void ButtonController::addHandler(std::function<void(void)> func){
         buttonSignal.connect(func);
+    }
+
+    void ButtonController::addLongPressHandler(std::function<void(void)> func){
+        longButtonSignal.connect(func);
     }
 
     void ButtonController::gpioButtonHandler(){

@@ -27,11 +27,14 @@ namespace cima::system {
 
         boost::signals2::signal<void ()> buttonSignal;
 
+        boost::signals2::signal<void ()> longButtonSignal;
+
     public:
         ButtonController(gpio_num_t buttonGpioPin);
         void initButton();
         void handleClicks();
         void addHandler(std::function<void(void)> func);
+        void addLongPressHandler(std::function<void(void)> func);
 
     private:
         void gpioButtonHandler();
