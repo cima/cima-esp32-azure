@@ -58,7 +58,7 @@ extern "C" void app_main(void)
     agent.cat("/spiffs/sheep.txt");
   }
 
-  cima::display::Display display(wireManager, GPIO_NUM_16);
+  cima::display::Display display(wireManager, cima::display::Display::LILYGO_OLED_CONFIG);
   agent.registerToMainLoop(
     [&]() {
       display.showTemperature(environmentSensorManager.readTemperature(), 

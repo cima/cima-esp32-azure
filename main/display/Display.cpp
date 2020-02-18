@@ -9,6 +9,16 @@ namespace cima::display{
 
     const ::cima::system::Log Display::LOG("Display");
 
+    const ssd1306_config_t Display::LILYGO_OLED_CONFIG = {
+        PERIPHS_IO_MUX_GPIO23_U, FUNC_GPIO23_GPIO23, 23, // CS Chip select
+        PERIPHS_IO_MUX_GPIO16_U, FUNC_GPIO16_GPIO16, 16, // RES reset
+        PERIPHS_IO_MUX_GPIO5_U,  FUNC_GPIO5_GPIO5,    5, // DC Data command
+        PERIPHS_IO_MUX_GPIO4_U,  FUNC_GPIO4_GPIO4,    4, // DIN data input
+        PERIPHS_IO_MUX_MTDO_U,   FUNC_MTDO_GPIO15,   15, // CLK clock
+        0x00, // Lower column address
+        0x10  // Higher column address
+    };
+
     const uint8_t Display::ICON_WIFI_88[8] = {
         0b00000000,
         0b00011000,
@@ -31,8 +41,8 @@ namespace cima::display{
         0b00111111
     };
 
-    Display::Display(::cima::system::WireManager &wire, const gpio_num_t resetPin) 
-        : wire(wire), resetPin(resetPin), oledDisplay(&wire.getWire()) {
+    Display::Display(::cima::system::WireManager &wire, const ssd1306_config_t config) 
+        : wire(wire), oledDisplay(&wire.getWire(), config) {
         
         initDisplay();
 
