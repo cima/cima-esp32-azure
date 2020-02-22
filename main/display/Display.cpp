@@ -19,35 +19,10 @@ namespace cima::display{
         0x10  // Higher column address
     };
 
-    const uint8_t Display::ICON_WIFI_88[8] = {
-        0b00000000,
-        0b00011000,
-        0b01111110,
-        0b10000001,
-        0b00111100,
-        0b01000010,
-        0b00011000,
-        0b00011000
-    };
-
-    const uint8_t Display::ICON_AZURE_88[8] = {
-        0b00011000,
-        0b00110100,
-        0b01100110,
-        0b01100110,
-        0b11100111,
-        0b11000011,
-        0b11001111,
-        0b00111111
-    };
-
     Display::Display(::cima::system::WireManager &wire, const ssd1306_config_t config) 
         : wire(wire), oledDisplay(&wire.getWire(), config) {
-        
+
         initDisplay();
-
-
-
         LOG.debug("Aspon konstruktor.");
     }
 
@@ -55,9 +30,13 @@ namespace cima::display{
         oledDisplay.clear_screen(0);
     }
     
-    esp_err_t Display::showTemperature(float temprature, float humidity, float pressure, bool isWiFi, bool isAzure) {
+    void Display::addStatusIcon(StatusIcon *statusIcon){
+        statusIcons.push_back(statusIcon);
+    }
 
-        drawStatus(isWiFi, isAzure);
+    esp_err_t Display::showTemperature(float temprature, float humidity, float pressure) {
+
+        drawStatus();
 
         char tempraturestr[6];
         sprintf(tempraturestr, "%4.1f", temprature);
@@ -84,13 +63,15 @@ namespace cima::display{
         return oledDisplay.refresh_gram();
     }
 
-    void Display::drawStatus(bool isWiFi, bool isAzure) {
-        if(isWiFi){
-            oledDisplay.draw_bitmap(0, 0, ICON_WIFI_88, 8, 8);
-        }
+    void Display::drawStatus() {
+        int index = 0;
+        for(auto icon : statusIcons){
+            if( ! icon){
+                continue;
+            }
 
-        if(isAzure){
-            oledDisplay.draw_bitmap(8, 0, ICON_AZURE_88, 8, 8);
+            oledDisplay.draw_bitmap(index * 8, 0, icon->getIcon(), 8, 8);
+            index++;
         }
     }
 }

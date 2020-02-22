@@ -20,6 +20,7 @@
 #include "iot/DeviceProvisioningClient.h"
 
 #include "display/Display.h"
+#include "display/StatusIcon.h"
 
 #include "Agent.h"
 #include "GreetingService.h"
@@ -44,6 +45,9 @@ cima::Agent agent;
 bool azureConnected;
 std::shared_ptr<cima::iot::IoTHubManager> iotHubManagerPtr;
 
+cima::display::BooleanStatusIcon wifiStatusIcon(cima::display::StatusIcon::ICON_WIFI_88);
+cima::display::BooleanStatusIcon azureStatusIcon(cima::display::StatusIcon::ICON_AZURE_88);
+
 extern "C" void app_main(void)
 {
   using namespace std::placeholders;
@@ -59,13 +63,14 @@ extern "C" void app_main(void)
   }
 
   cima::display::Display display(wireManager, cima::display::Display::LILYGO_OLED_CONFIG);
+  display.addStatusIcon((cima::display::StatusIcon *)&wifiStatusIcon);
+  display.addStatusIcon((cima::display::StatusIcon *)&azureStatusIcon);
   agent.registerToMainLoop(
     [&]() {
+      azureStatusIcon.setActive(iotHubManagerPtr && iotHubManagerPtr->isReady());//TODO make it asynch over up/down handlers
       display.showTemperature(environmentSensorManager.readTemperature(), 
       environmentSensorManager.readHumidity(),
-      environmentSensorManager.readPressure(),
-      wifiManager.isConnected(), 
-      iotHubManagerPtr && iotHubManagerPtr->isReady());
+      environmentSensorManager.readPressure());
     });
 
   agent.setupNetwork(wifiManager);
@@ -97,6 +102,10 @@ extern "C" void app_main(void)
   agent.registerToMainLoop([&](){iotHubManager->loop();});
   wifiManager.registerNetworkUpHandler([&](){iotHubManager->connect();});
   wifiManager.registerNetworkDownHandler([&](){iotHubManager->close();});
+
+  wifiManager.registerNetworkUpHandler([&](){wifiStatusIcon.setActive(true);});
+  wifiManager.registerNetworkDownHandler([&](){wifiStatusIcon.setActive(false);});
+
   wifiManager.start();
 
   logger.info(" > Environment sensor");

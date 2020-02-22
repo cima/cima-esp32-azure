@@ -56,7 +56,9 @@ Download [esp-idf-tools-setup-2.3.exe](https://dl.espressif.com/dl/esp-idf-tools
     idf.py build
 ```
 
-## Development builds
+## Development
+
+### Build & Flash
 
 ### STDOUT over serial line over USB
 1. Plug your Lily GO Oled to USB
@@ -64,6 +66,14 @@ Download [esp-idf-tools-setup-2.3.exe](https://dl.espressif.com/dl/esp-idf-tools
   -  Connection Type: serial
   -  Serial Line _COM5_ (Based on where your board appears the number can differ)
   -  Speed 115200
+
+### Wi-Fi Networks, Certificates
+
+- (./filesystem/connectivity/wifi.json) populate with wi-fi networks where your ESP will operate
+- (./filesystem/connectivity/azure.json) populate with your azure account adresses
+
+_TODO: Certificates_
+- (./filesystem/identity/)
 
 ## Dependencies details
 

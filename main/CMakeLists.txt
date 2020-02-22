@@ -15,6 +15,7 @@ set(COMPONENT_SRCS
     "iot/IotHubManager.cpp" "iot/IotHubManager.h"
     "iot/DeviceProvisioningClient.cpp" "iot/DeviceProvisioningClient.h"
     "display/Display.h" "display/Display.cpp"
+    "display/StatusIcon.h" "display/StatusIcon.cpp"
     ${AZURE_IOT_SDK}/certs/certs.c
 )
 
