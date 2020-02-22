@@ -9,11 +9,6 @@
 ## Sesnsor info
 - [Adafruit BME280](https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf)
 
-# Environment setup
-- [Visual studio code](https://code.visualstudio.com/)
-  - [Setting up Visual Studio Code for ESP32 IDF (FreeRTOS)](https://github.com/Deous/VSC-Guide-for-esp32) (Contains references and advices for older version of ESP-IDF)
-- git
-
 # SW info
 
 # Development Environment
@@ -21,6 +16,11 @@
 ## Prerequisities
 - Python 3.7+
 - [Git](https://git-scm.com/download/win)
+- [CP210x USB to UART Bridge VCP Drivers](https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers)
+  - [Download VCP for Win 7](https://www.silabs.com/documents/public/software/CP210x_Windows_Drivers.zip)
+- [Visual studio code](https://code.visualstudio.com/) (optional)
+  - [Setting up Visual Studio Code for ESP32 IDF (FreeRTOS)](https://github.com/Deous/VSC-Guide-for-esp32) (Contains references and advices for older version of ESP-IDF)
+- [Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html)
 
 ## Install toolchain and libraries
 1. Clone this project somewhere e.g. `./cima-esp32-azure/`
@@ -55,6 +55,15 @@ Download [esp-idf-tools-setup-2.3.exe](https://dl.espressif.com/dl/esp-idf-tools
     init_cmd.bat
     idf.py build
 ```
+
+## Development builds
+
+### STDOUT over serial line over USB
+1. Plug your Lily GO Oled to USB
+2. Open Putty
+  -  Connection Type: serial
+  -  Serial Line _COM5_ (Based on where your board appears the number can differ)
+  -  Speed 115200
 
 ## Dependencies details
 
