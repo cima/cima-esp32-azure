@@ -1,7 +1,13 @@
-cd c:\Users\z608328\ESP32\esp-idf
+SET "ESP_TOOLCHAIN_DIR=e:/SW/ESP"
+SET "ESP_PROJECT=%cd%"
+
+cd /D %ESP_TOOLCHAIN_DIR%/esp-idf
 call export.bat
+
+cd /D %ESP_PROJECT%
+
 SET "CXX=xtensa-esp32-elf-g++"
-SET "IOT_SOLUTION_PATH=c:/Users/z608328/ESP32/esp-iot-solution"
-SET "AZURE_SDK_C_PATH=c:/Users/z608328/ESP32/esp-azure"
-SET "BOOST_ROOT=c:/Users/z608328/ESP32/boost"
-cd c:\src\incubator\cima-esp32-azure 
+SET "IOT_SOLUTION_PATH=%ESP_TOOLCHAIN_DIR%/esp-iot-solution"
+SET "AZURE_SDK_C_PATH=%ESP_TOOLCHAIN_DIR%/esp-azure"
+SET "BOOST_ROOT=%ESP_TOOLCHAIN_DIR%/boost_1_71_0"
+SET "IDF_PATH=%ESP_TOOLCHAIN_DIR%/esp-idf"

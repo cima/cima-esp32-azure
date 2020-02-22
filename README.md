@@ -14,7 +14,49 @@
   - [Setting up Visual Studio Code for ESP32 IDF (FreeRTOS)](https://github.com/Deous/VSC-Guide-for-esp32) (Contains references and advices for older version of ESP-IDF)
 - git
 
-## Dependencies
+# SW info
+
+# Development Environment
+
+## Prerequisities
+- Python 3.7+
+- [Git](https://git-scm.com/download/win)
+
+## Install toolchain and libraries
+1. Clone this project somewhere e.g. `./cima-esp32-azure/`
+2. Create separate ESP toolchain and libraries folder e.g. `./ESP/`
+```
+    mkdir ./ESP/
+    cd ./ESP/
+```
+3. Clone _ESP-IDF_ to folder from step 2. e.g. `./ESP/esp-idf/`
+```
+    git clone -b release/v4.0 --recursive https://github.com/espressif/esp-idf.git
+```
+4. Clone _ESP-Azure_ to folder from step 2. e.g. `./ESP/esp-azure/`
+```
+    git clone --recursive https://github.com/espressif/esp-azure.git
+    git submodule update --init --recursive
+```
+5. Clone _ESP-IoT-solution_ from fork _cima/esp-iot-solution_ to folder from step 2. e.g. `./ESP/esp-iot-solution/`
+```
+    git clone -b feature/ssd1306_generic --recursive https://github.com/cima/esp-iot-solution.git
+```
+6. get Boost via [Version 1.71.0](https://www.boost.org/users/history/version_1_71_0.html) and unpack it to folder from step 2. E.g. `./ESP/boost_1_71_0/`
+7. ESP 32 toolchain v4.0 (incl. gcc, cmake, ninja) -- Windows
+Download [esp-idf-tools-setup-2.3.exe](https://dl.espressif.com/dl/esp-idf-tools-setup-2.3.exe) see [Standard Setup of Toolchain for Windows](https://docs.espressif.com/projects/esp-idf/en/release-v4.0/get-started/windows-setup.html) for more details
+  a. Select your preinstalled GIT and Python
+  b. When asked whether to download or use ESP-IDF select _Use an existing ESP-IDF directory_ an navigate to the folder from step 3.
+  c. When you asked _Select Destination Location_ you can also point to folder from step 2 to have all the toolchain at one place.
+
+8. Update file `init_cmd.bat` in this project (from step 1) so the first variable `ESP_TOOLCHAIN_DIR` contains the absolute prefix of your toolchain directory.
+9. Fisrt build
+```
+    init_cmd.bat
+    idf.py build
+```
+
+## Dependencies details
 
 ### ESP 4.0 (beta 2)
 - [Getting started ESP 4.0 (beta 2)](https://docs.espressif.com/projects/esp-idf/en/v4.0-beta2/get-started/index.html)
@@ -54,7 +96,7 @@ Use [ESP IoT Solution](https://github.com/espressif/esp-iot-solution/) clone it 
 ```
 and define environment variable named `IOT_SOLUTION_PATH` pointing to the above cloned directory.
 
-In (./CMakeLists.txt) we use a little dirty trick where we only define and use those drives we care of because the rest is highly incompatible with ESP-IDF 4.0 Beta2.
+In (./CMakeLists.txt) we use a little dirty trick where we only define and use those drives we care of because the rest is highly incompatible with ESP-IDF 4.0.
 
 # Deprecated
 
