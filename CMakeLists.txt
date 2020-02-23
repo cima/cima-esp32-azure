@@ -34,8 +34,9 @@ set(IOT_COMPONENT_DIRS  ${IOT_COMPONENT_DIRS}
 
 set(EXTRA_COMPONENT_DIRS "${EXTRA_COMPONENT_DIRS} ${IOT_COMPONENT_DIRS}")
 
-#include($ENV{IOT_SOLUTION_PATH}/components/i2c_devices/i2c_bus/CMakeLists.txt)
-#include($ENV{IOT_SOLUTION_PATH}/components/i2c_devices/sensor/bme280/CMakeLists.txt)
+# Modem & PPPoS implementation
+# ----------------------------
+set(EXTRA_COMPONENT_DIRS "${EXTRA_COMPONENT_DIRS} ${IDF_PATH}/examples/protocols/pppos_client/components")
 
 # Main code
 # ---------

@@ -6,7 +6,7 @@
 #include <functional>
 
 #include "system/Log.h"
-#include "system/WifiManager.h"
+#include "system/network/WifiManager.h"
 #include "iot/AzureConfig.h"
 #include "iot/IoTHubManager.h"
 #include "system/EnvironmentSensorManager.h"
@@ -30,8 +30,8 @@ namespace cima {
 
             void initFlashStorage();
             bool mountFlashFileSystem();
-            void setupNetwork(system::WifiManager &wifiManager);
-            std::list<system::WifiCredentials> readWifiCredentials();
+            void setupNetwork(system::network::WifiManager &wifiManager);
+            std::list<system::network::WifiCredentials> readWifiCredentials();
             iot::AzureConfig readAzureConfig();
 
             void mainLoop();

@@ -9,27 +9,27 @@
 
 #include <boost/signals2/signal.hpp>
 
-#include "Log.h"
+#include "../Log.h"
 #include "WifiCredentials.h"
+#include "NetworkManager.h"
 
-namespace cima::system {
+namespace cima::system::network {
 
-class WifiManager {
+class WifiManager : public NetworkManager {
 
     static Log LOG;
 
     bool started;
-    bool connected;
 
-    std::list<system::WifiCredentials> credentials;
+    std::list<WifiCredentials> credentials;
 
     wifi_init_config_t firmwareWifiConfig = WIFI_INIT_CONFIG_DEFAULT();
     wifi_config_t wifiConfig;
 
     int connectionAttempts = 0;
 
-    std::list<system::WifiCredentials> networks;
-    std::list<system::WifiCredentials>::iterator networkIterator;
+    std::list<WifiCredentials> networks;
+    std::list<WifiCredentials>::iterator networkIterator;
 
     boost::signals2::signal<void ()> networkUpSignal;
     boost::signals2::signal<void ()> networkDownSignal;
@@ -38,18 +38,14 @@ public:
     WifiManager();
 
     void resetNetwork(const std::string &ssid, const std::string &passphrase);
-    void addNetwork(const system::WifiCredentials &credentials);
+    void addNetwork(const WifiCredentials &credentials);
 
     void start();
     void initAccesspoint();
     void tryNextNetwork();
 
-    void initFlashStorage();
     bool isStarted();
-    bool isConnected();
-
-    void registerNetworkUpHandler(std::function<void(void)> func);
-    void registerNetworkDownHandler(std::function<void(void)> func);
+    virtual bool isConnected();
 
 private:
     void wifiEventHandler(int32_t event_id, void* event_data);

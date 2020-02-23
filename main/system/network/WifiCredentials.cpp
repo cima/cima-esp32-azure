@@ -1,6 +1,6 @@
 #include "WifiCredentials.h"
 
-namespace cima::system {
+namespace cima::system::network {
 
 WifiCredentials::WifiCredentials(const std::string &ssid, const std::string &passphrase)
     : ssid(ssid), passphrase(passphrase) {

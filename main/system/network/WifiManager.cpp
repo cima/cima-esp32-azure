@@ -12,15 +12,15 @@
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY  10
 
-namespace cima::system {
+namespace cima::system::network {
 
     Log WifiManager::LOG("WifiManager");
 
     WifiManager::WifiManager() 
-        : started(false), connected(false), networkIterator(networks.end()) {
+        : started(false), networkIterator(networks.end()) {
     }
 
-    void WifiManager::addNetwork(const system::WifiCredentials &credentials){
+    void WifiManager::addNetwork(const WifiCredentials &credentials){
         this->credentials.push_back(credentials);
         networkIterator = this->credentials.begin();
     }
@@ -119,14 +119,6 @@ namespace cima::system {
 
     bool WifiManager::isConnected(){
         return connected;
-    }
-
-    void WifiManager::registerNetworkUpHandler(std::function<void(void)> func){
-        networkUpSignal.connect(func);
-    }
-
-    void WifiManager::registerNetworkDownHandler(std::function<void(void)> func){
-        networkDownSignal.connect(func);
     }
 
     void WifiManager::wifiEventHandlerWrapper(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {

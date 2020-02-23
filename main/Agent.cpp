@@ -104,7 +104,7 @@ namespace cima {
         return true;
     }
 
-    void Agent::setupNetwork(system::WifiManager &wifiManager){
+    void Agent::setupNetwork(system::network::WifiManager &wifiManager){
         LOGGER.info(" > WiFi");
         auto credentials = std::move(readWifiCredentials());
 
@@ -114,11 +114,11 @@ namespace cima {
         }
     }
 
-    std::list<system::WifiCredentials> Agent::readWifiCredentials(){
+    std::list<system::network::WifiCredentials> Agent::readWifiCredentials(){
         std::ifstream in(FLASH_FILESYSTEM_MOUNT_PATH + "/connectivity/wifi.json");
         std::string wifiJson((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 
-        std::list<system::WifiCredentials> credentials;
+        std::list<system::network::WifiCredentials> credentials;
 
         cJSON *root = cJSON_Parse(wifiJson.c_str());
         cJSON *networks = cJSON_GetObjectItem(root, "Networks");
@@ -128,7 +128,7 @@ namespace cima {
             auto ssid = cJSON_GetObjectItem(network, "SSID")->valuestring;
             auto passphrase = cJSON_GetObjectItem(network, "password")->valuestring;
 
-            credentials.push_back(system::WifiCredentials(std::string(ssid), std::string(passphrase)));
+            credentials.push_back(system::network::WifiCredentials(std::string(ssid), std::string(passphrase)));
         }
 
         return credentials;

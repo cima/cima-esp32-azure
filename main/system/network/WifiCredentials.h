@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace cima::system {
+namespace cima::system::network {
 
 class WifiCredentials{
     const std::string ssid;

@@ -9,7 +9,7 @@
 
 #include "system/Log.h"
 
-#include "system/WifiManager.h"
+#include "system/network/WifiManager.h"
 #include "system/WireManager.h"
 #include "system/EnvironmentSensorManager.h"
 #include "system/ButtonController.h"
@@ -27,7 +27,7 @@
 
 cima::system::Log logger("main");
 
-cima::system::WifiManager wifiManager;
+cima::system::network::WifiManager wifiManager;
 
 cima::system::WireManager wireManager(OLED_IIC_NUM, GPIO_NUM_15, GPIO_NUM_4);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
