@@ -4,7 +4,7 @@
 #include <esp_modem_dce_service.h>
 #include "M590.h"
 
-#define MODEM_RESULT_CODE_POWERDOWN "POWER DOWN"
+#define MODEM_RESULT_CODE_POWERDOWN "OK"
 
 /**
  * @brief Macro defined for error checking
@@ -204,12 +204,11 @@ static esp_err_t m590_handle_cops(modem_dce_t *dce, const char *line)
 }
 
 /**
- * @brief Handle response from AT+CPOWD=1 //FIXME power down signal
+ * @brief Handle response from AT+CPWROFF 
  */
 static esp_err_t m590_handle_power_down(modem_dce_t *dce, const char *line)
 {
     esp_err_t err = ESP_FAIL;
-    //FIXME M590 has different power commands
     if (strstr(line, MODEM_RESULT_CODE_POWERDOWN)) {
         err = esp_modem_process_command_done(dce, MODEM_STATE_SUCCESS);
     }
@@ -317,8 +316,7 @@ static esp_err_t m590_power_down(modem_dce_t *dce)
     modem_dte_t *dte = dce->dte;
     dce->handle_line = m590_handle_power_down;
 
-    //FIXME M590 has different power commands
-    DCE_CHECK(dte->send_cmd(dte, "AT+CPOWD=1\r", MODEM_COMMAND_TIMEOUT_POWEROFF) == ESP_OK, "send command failed", err);
+    DCE_CHECK(dte->send_cmd(dte, "AT+CPWROFF\r", MODEM_COMMAND_TIMEOUT_POWEROFF) == ESP_OK, "send command failed", err);
     DCE_CHECK(dce->state == MODEM_STATE_SUCCESS, "power down failed", err);
     ESP_LOGD(DCE_TAG, "power down ok");
     return ESP_OK;
@@ -446,7 +444,7 @@ modem_dce_t *m590_init(modem_dte_t *dte)
     m590_dce->parent.get_signal_quality = m590_get_signal_quality; //Done
     m590_dce->parent.get_battery_status = m590_get_battery_status; //Done - but modem probably doesn't support this command
     m590_dce->parent.set_working_mode = m590_set_working_mode; //Done
-    m590_dce->parent.power_down = m590_power_down;//FIXME M590 has different power commands
+    m590_dce->parent.power_down = m590_power_down;//Done
     m590_dce->parent.deinit = m590_deinit; // Done
     /* Sync between DTE and DCE */
     DCE_CHECK(esp_modem_dce_sync(&(m590_dce->parent)) == ESP_OK, "sync failed", err_io);
