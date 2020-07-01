@@ -10,6 +10,7 @@
 #include "system/Log.h"
 
 #include "system/network/WifiManager.h"
+#include "system/network/ModemManager.h"
 #include "system/WireManager.h"
 #include "system/EnvironmentSensorManager.h"
 #include "system/ButtonController.h"
@@ -27,7 +28,16 @@
 
 cima::system::Log logger("main");
 
-cima::system::network::WifiManager wifiManager;
+const esp_modem_dte_config_t MODEM_UART_CONFIG = {                                           
+    .port_num = UART_NUM_1,                 
+    .data_bits = UART_DATA_8_BITS,          
+    .stop_bits = UART_STOP_BITS_1,          
+    .parity = UART_PARITY_DISABLE,          
+    .flow_control = MODEM_FLOW_CONTROL_NONE, 
+    .baud_rate = 38400
+};
+cima::system::network::ModemManager modemManager(MODEM_UART_CONFIG);
+//cima::system::network::WifiManager wifiManager;
 
 cima::system::WireManager wireManager(OLED_IIC_NUM, GPIO_NUM_15, GPIO_NUM_4);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
@@ -73,9 +83,9 @@ extern "C" void app_main(void)
       environmentSensorManager.readPressure());
     });
 
-  agent.setupNetwork(wifiManager);
-
   
+  //agent.setupNetwork(wifiManager); //TODO bring back Wi-fi
+    
   logger.info(" > Azure config file");
   auto azureConfig = agent.readAzureConfig();
 
@@ -100,6 +110,9 @@ extern "C" void app_main(void)
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
   agent.registerToMainLoop([&](){iotHubManager->loop();});
+
+  //TODO bring back Wi-fi
+  /*
   wifiManager.registerNetworkUpHandler([&](){iotHubManager->connect();});
   wifiManager.registerNetworkDownHandler([&](){iotHubManager->close();});
 
@@ -107,6 +120,15 @@ extern "C" void app_main(void)
   wifiManager.registerNetworkDownHandler([&](){wifiStatusIcon.setActive(false);});
 
   wifiManager.start();
+  */
+
+  modemManager.registerNetworkUpHandler([&](){iotHubManager->connect();});
+  modemManager.registerNetworkDownHandler([&](){iotHubManager->close();});
+
+  modemManager.registerNetworkUpHandler([&](){wifiStatusIcon.setActive(true);});
+  modemManager.registerNetworkDownHandler([&](){wifiStatusIcon.setActive(false);});
+  
+  modemManager.init();
 
   logger.info(" > Environment sensor");
   environmentSensorManager.init();

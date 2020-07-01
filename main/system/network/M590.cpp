@@ -6,6 +6,12 @@
 
 #define MODEM_RESULT_CODE_POWERDOWN "OK"
 
+#define MODEM_NETWORK_STATUS_REGISTERED 1
+#define MODEM_NETWORK_STATUS_REFUSED 3
+#define MODEM_NETWORK_STATUS_REGISTERED_ROAMING 5
+
+#define MODEM_COMMAND_NETWORK_REGISTRSTION "CREG"
+
 /**
  * @brief Macro defined for error checking
  *
@@ -29,6 +35,9 @@ typedef struct {
     void *priv_resource; /*!< Private resource */
     modem_dce_t parent;  /*!< DCE parent class */
 } m590_modem_dce_t;
+
+
+static int networkRegState;
 
 /**
  * @brief Handle response from AT+CSQ
@@ -105,6 +114,18 @@ static esp_err_t m590_handle_atd_ppp(modem_dce_t *dce, const char *line)
 /**
  * @brief Handle response from AT+CGMM
  */
+static esp_err_t m590_handle_modem_startup(modem_dce_t *dce, const char *line)
+{
+    esp_err_t err = ESP_FAIL;
+    if (strstr(line, "MODEM:STARTUP")) {
+        err = esp_modem_process_command_done(dce, MODEM_STATE_SUCCESS);
+    }
+    return err;
+}
+
+/**
+ * @brief Handle response from AT+CGMM
+ */
 static esp_err_t m590_handle_cgmm(modem_dce_t *dce, const char *line)
 {
     esp_err_t err = ESP_FAIL;
@@ -165,6 +186,55 @@ static esp_err_t m590_handle_cimi(modem_dce_t *dce, const char *line)
     return err;
 }
 
+static bool is_m590_gibberish(const char *line)
+{
+    return strstr(line, "+PBREADY") != nullptr;
+}
+
+static bool is_m590_crash(const char *line)
+{
+    return strstr(line, "MODEM:STARTUP") != nullptr;
+}
+
+/**
+ * @brief Handle response from AT+CREG?
+ */
+static esp_err_t m590_handle_creg(modem_dce_t *dce, const char *line)
+{
+    esp_err_t err = ESP_FAIL;
+    if (is_m590_gibberish(line)){
+        err = ESP_OK;
+    } else if (is_m590_crash(line)) {
+        err = esp_modem_process_command_done(dce, MODEM_STATE_FAIL);
+        networkRegState = -1;
+    } else if (strstr(line, MODEM_RESULT_CODE_SUCCESS)) {
+        err = esp_modem_process_command_done(dce, MODEM_STATE_SUCCESS);
+    } else if (strstr(line, MODEM_RESULT_CODE_ERROR)) {
+        err = esp_modem_process_command_done(dce, MODEM_STATE_FAIL);
+    } else if (!strncmp(line, "+" MODEM_COMMAND_NETWORK_REGISTRSTION ": ", strlen("+" MODEM_COMMAND_NETWORK_REGISTRSTION ": "))) {
+        /* there might be some random spaces in operator's name, we can not use sscanf to parse the result */
+        /* strtok will break the string, we need to create a copy */
+        size_t len = strlen(line);
+        char *line_copy = (char *)malloc(len + 1);
+        strcpy(line_copy, line);
+        /* +COPS: <mode>[, <format>[, <oper>]] */
+        char *str_ptr = NULL;
+        char *p[3];
+        uint8_t i = 0;
+        /* strtok will broke string by replacing delimiter with '\0' */
+        p[i] = strtok_r(line_copy, ",", &str_ptr);
+        while (p[i]) {
+            p[++i] = strtok_r(NULL, ",", &str_ptr);
+        }
+        if (i >= 2) {
+            networkRegState = atoi(p[1]); //FIXME zase global
+            err = ESP_OK;
+        }
+        free(line_copy);
+    }
+    return err;
+}
+
 /**
  * @brief Handle response from AT+COPS?
  */
@@ -213,6 +283,11 @@ static esp_err_t m590_handle_power_down(modem_dce_t *dce, const char *line)
         err = esp_modem_process_command_done(dce, MODEM_STATE_SUCCESS);
     }
     return err;
+}
+
+esp_err_t esp_modem_dce_set_flow_ctrl_noop(modem_dce_t *dce, modem_flow_ctrl_t flow_ctrl)
+{
+    return ESP_OK;
 }
 
 /**
@@ -324,6 +399,18 @@ err:
     return ESP_FAIL;
 }
 
+static esp_err_t m590_wait_for_startup(m590_modem_dce_t *m590_dce)
+{
+    modem_dte_t *dte = m590_dce->parent.dte;
+    m590_dce->parent.handle_line = m590_handle_modem_startup;
+    DCE_CHECK(dte->send_cmd(dte, "\r", 15000) == ESP_OK, "send command failed", err);
+    DCE_CHECK(m590_dce->parent.state == MODEM_STATE_SUCCESS, "get module name failed", err);
+    ESP_LOGD(DCE_TAG, "Waiting for startup OK");
+    return ESP_OK;
+err:
+    return ESP_FAIL;
+}
+
 /**
  * @brief Get DCE module name
  *
@@ -385,6 +472,27 @@ err:
 }
 
 /**
+ * @brief Get network registration status
+ *
+ * @param m590_dce m590 object
+ * @return esp_err_t
+ *      - ESP_OK on success
+ *      - ESP_FAIL on error
+ */
+static esp_err_t m590_get_network_registration_status(m590_modem_dce_t *m590_dce)
+{
+    //CIMA
+    modem_dte_t *dte = m590_dce->parent.dte;
+    m590_dce->parent.handle_line = m590_handle_creg;
+    DCE_CHECK(dte->send_cmd(dte, "AT+" MODEM_COMMAND_NETWORK_REGISTRSTION "?\r", MODEM_COMMAND_TIMEOUT_OPERATOR) == ESP_OK, "send command failed", err);
+    DCE_CHECK(m590_dce->parent.state == MODEM_STATE_SUCCESS, "get network registration status failed", err);
+    ESP_LOGD(DCE_TAG, "get network registration status ok");
+    return ESP_OK;
+err:
+    return ESP_FAIL;
+}
+
+/**
  * @brief Get Operator's name
  *
  * @param m590_dce m590 object
@@ -424,6 +532,9 @@ static esp_err_t m590_deinit(modem_dce_t *dce)
 
 modem_dce_t *m590_init(modem_dte_t *dte)
 {
+
+    int countDown = 100; //FIXME FUJ fuj fuj
+    const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
     /* malloc memory for m590_dce object */
     m590_modem_dce_t *m590_dce = (m590_modem_dce_t *)calloc(1, sizeof(m590_modem_dce_t));
     DCE_CHECK(m590_dce, "calloc m590_dce failed", err);
@@ -438,7 +549,7 @@ modem_dce_t *m590_init(modem_dte_t *dte)
     m590_dce->parent.sync = esp_modem_dce_sync;
     m590_dce->parent.echo_mode = esp_modem_dce_echo;
     m590_dce->parent.store_profile = esp_modem_dce_store_profile;
-    m590_dce->parent.set_flow_ctrl = esp_modem_dce_set_flow_ctrl;
+    m590_dce->parent.set_flow_ctrl = esp_modem_dce_set_flow_ctrl_noop; //FIXME nemáme
     m590_dce->parent.define_pdp_context = esp_modem_dce_define_pdp_context;
     m590_dce->parent.hang_up = esp_modem_dce_hang_up;
     m590_dce->parent.get_signal_quality = m590_get_signal_quality; //Done
@@ -446,6 +557,10 @@ modem_dce_t *m590_init(modem_dte_t *dte)
     m590_dce->parent.set_working_mode = m590_set_working_mode; //Done
     m590_dce->parent.power_down = m590_power_down;//Done
     m590_dce->parent.deinit = m590_deinit; // Done
+
+    //TODO if modem is in autobaud rate this will never occur
+    //DCE_CHECK(m590_wait_for_startup(m590_dce) == ESP_OK, "Waiting for startup message failed", err_io); //Done
+
     /* Sync between DTE and DCE */
     DCE_CHECK(esp_modem_dce_sync(&(m590_dce->parent)) == ESP_OK, "sync failed", err_io);
     /* Close echo */
@@ -456,6 +571,28 @@ modem_dce_t *m590_init(modem_dte_t *dte)
     DCE_CHECK(m590_get_imei_number(m590_dce) == ESP_OK, "get imei failed", err_io); //Done
     /* Get IMSI number */
     DCE_CHECK(m590_get_imsi_number(m590_dce) == ESP_OK, "get imsi failed", err_io); //Done
+
+    //Wait for network
+    networkRegState = 0;
+    while(countDown-- > 0 && (networkRegState != MODEM_NETWORK_STATUS_REGISTERED && networkRegState != MODEM_NETWORK_STATUS_REGISTERED_ROAMING)){
+        DCE_CHECK(m590_get_network_registration_status(m590_dce) == ESP_OK, "get network registration status", dirty_break); //Done
+        ESP_LOGI(DCE_TAG, "Registration status: %d", networkRegState);
+        
+        // Explicit network registration refusal no need to try 
+        if(networkRegState == MODEM_NETWORK_STATUS_REFUSED){
+            ESP_LOGE(DCE_TAG, "Registration to GSM network refused");
+        }
+        vTaskDelay( xDelay );
+        continue;
+dirty_break:
+        break;
+    }
+
+    if(networkRegState != MODEM_NETWORK_STATUS_REGISTERED && networkRegState != MODEM_NETWORK_STATUS_REGISTERED_ROAMING){
+        ESP_LOGE(DCE_TAG, "Network registration failed. Last status %d", networkRegState);
+        goto err_io;
+    }
+
     /* Get operator name */
     DCE_CHECK(m590_get_operator_name(m590_dce) == ESP_OK, "get operator name failed", err_io); //Done
     return &(m590_dce->parent);

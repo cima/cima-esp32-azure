@@ -31,9 +31,6 @@ class WifiManager : public NetworkManager {
     std::list<WifiCredentials> networks;
     std::list<WifiCredentials>::iterator networkIterator;
 
-    boost::signals2::signal<void ()> networkUpSignal;
-    boost::signals2::signal<void ()> networkDownSignal;
-
 public:
     WifiManager();
 
