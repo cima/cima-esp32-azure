@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 #include <functional>
+#include <time.h>
 
 #include <driver/gpio.h>
 #include <iot_ssd1306.h>
@@ -13,6 +14,7 @@
 #include "system/WireManager.h"
 #include "system/EnvironmentSensorManager.h"
 #include "system/ButtonController.h"
+#include "system/PWMDriver.h"
 
 #include "iot/CertSource.h"
 #include "iot/AzureConfig.h"
@@ -24,6 +26,7 @@
 
 #include "Agent.h"
 #include "GreetingService.h"
+#include "LightAlarmService.h"
 
 cima::system::Log logger("main");
 
@@ -47,6 +50,9 @@ std::shared_ptr<cima::iot::IoTHubManager> iotHubManagerPtr;
 
 cima::display::BooleanStatusIcon wifiStatusIcon(cima::display::StatusIcon::ICON_WIFI_88);
 cima::display::BooleanStatusIcon azureStatusIcon(cima::display::StatusIcon::ICON_AZURE_88);
+
+cima::system::PWMDriver mosfetDriver(GPIO_NUM_27);
+cima::LightAlarmService lightAlarmService(mosfetDriver);
 
 extern "C" void app_main(void)
 {
@@ -90,6 +96,7 @@ extern "C" void app_main(void)
 
   logger.info("IoT hub Hostname: %s", azureConfig.getIotHubHostname().c_str());
 
+
   std::shared_ptr<cima::iot::IoTHubManager> iotHubManager(new cima::iot::IoTHubManager(azureConfig.getIotHubHostname(), certificate));
   iotHubManagerPtr = iotHubManager;
   
@@ -100,9 +107,10 @@ extern "C" void app_main(void)
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
   agent.registerToMainLoop([&](){iotHubManager->loop();});
+  
   wifiManager.registerNetworkUpHandler([&](){iotHubManager->connect();});
   wifiManager.registerNetworkDownHandler([&](){iotHubManager->close();});
-
+  
   wifiManager.registerNetworkUpHandler([&](){wifiStatusIcon.setActive(true);});
   wifiManager.registerNetworkDownHandler([&](){wifiStatusIcon.setActive(false);});
 
@@ -133,11 +141,15 @@ extern "C" void app_main(void)
   buttonController.initButton();
   buttonController.addHandler(buttonFunc);
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
+  
+  //agent.registerToMainLoop([&](){ lightAlarmService.loop(); });
+  auto lightAlarmServiceThread = std::thread([&](){ lightAlarmService.loop(); });
 
   logger.info(" > Main loop");
   agent.mainLoop();
 
   welcomeGizmo.join();
   welcomeSheep.join();
+  lightAlarmServiceThread.join();
 
 }

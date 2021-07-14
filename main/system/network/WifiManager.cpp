@@ -104,6 +104,7 @@ namespace cima::system::network {
             connected = true;
             auto signalThread = std::thread([&](){networkUpSignal();});
             signalThread.join();
+
         } else if (event_id == IP_EVENT_STA_LOST_IP) {
             LOG.info("Wi-Fi connectivity lost");
             connectionAttempts = 0;

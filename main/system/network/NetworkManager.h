@@ -16,10 +16,10 @@ class NetworkManager {
 
     static Log LOG;
 
+protected: 
     boost::signals2::signal<void ()> networkUpSignal;
     boost::signals2::signal<void ()> networkDownSignal;
-
-protected:    
+   
     bool connected;
     //bool started; //TODO Do we really need this?
 
