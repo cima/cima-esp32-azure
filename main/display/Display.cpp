@@ -20,14 +20,25 @@ namespace cima::display{
     };
 
     Display::Display(::cima::system::WireManager &wire, const ssd1306_config_t config) 
-        : wire(wire), oledDisplay(&wire.getWire(), config) {
+        : wire(wire), config(config), enabled(false) {
 
-        initDisplay();
+        this->setEnabled(true);
         LOG.debug("Aspon konstruktor.");
     }
 
     void Display::initDisplay(){
-        oledDisplay.clear_screen(0);
+        oledDisplay.reset( new CSsd1306(&wire.getWire(), config) );
+
+        oledDisplay->clear_screen(0);
+    }
+
+    void Display::destroyDisplay(){
+        oledDisplay->clear_screen(0); //TODO this is not turning display off!
+
+        GPIO_OUTPUT_SET(LILYGO_OLED_CONFIG.chipSelectNumber, 1); //CS reset
+        GPIO_OUTPUT_SET(LILYGO_OLED_CONFIG.resetNumber, 0); //RES set
+
+        oledDisplay.reset();
     }
     
     void Display::addStatusIcon(StatusIcon *statusIcon){
@@ -36,31 +47,35 @@ namespace cima::display{
 
     esp_err_t Display::showTemperature(float temprature, float humidity, float pressure) {
 
+        if( ! enabled  || ! oledDisplay){
+            return ESP_OK;
+        }
+
         drawStatus();
 
         char tempraturestr[6];
         sprintf(tempraturestr, "%4.1f", temprature);
         tempraturestr[4] = '\0';
 
-        oledDisplay.draw_string(0, 16, (const uint8_t *) "TEM:", 16, 1);
-        oledDisplay.draw_3216char(36, 16, tempraturestr[0]);
-        oledDisplay.draw_3216char(52, 16, tempraturestr[1]);
-        oledDisplay.draw_char(70, 30, tempraturestr[2], 16, 1);
-        oledDisplay.draw_3216char(75, 16, tempraturestr[3]);
+        oledDisplay->draw_string(0, 16, (const uint8_t *) "TEM:", 16, 1);
+        oledDisplay->draw_3216char(36, 16, tempraturestr[0]);
+        oledDisplay->draw_3216char(52, 16, tempraturestr[1]);
+        oledDisplay->draw_char(70, 30, tempraturestr[2], 16, 1);
+        oledDisplay->draw_3216char(75, 16, tempraturestr[3]);
 
         char humidityStr[9];
         sprintf(humidityStr, "%5.1f %%", humidity);
 
-        oledDisplay.draw_string(0, 52, (const uint8_t *) "RH", 12, 0);
-        oledDisplay.draw_string(12, 52, (const uint8_t *) humidityStr, 12, 1);
+        oledDisplay->draw_string(0, 52, (const uint8_t *) "RH", 12, 0);
+        oledDisplay->draw_string(12, 52, (const uint8_t *) humidityStr, 12, 1);
 
         char pressureStr[11];
         sprintf(pressureStr, "%6.1f hPa", pressure);
 
-        oledDisplay.draw_string(12 + 8*6, 52, (const uint8_t *) "P", 12, 0);
-        oledDisplay.draw_string(12 + 8*6 + 6, 52, (const uint8_t *) pressureStr, 12, 1);
+        oledDisplay->draw_string(12 + 8*6, 52, (const uint8_t *) "P", 12, 0);
+        oledDisplay->draw_string(12 + 8*6 + 6, 52, (const uint8_t *) pressureStr, 12, 1);
 
-        return oledDisplay.refresh_gram();
+        return oledDisplay->refresh_gram();
     }
 
     void Display::drawStatus() {
@@ -70,8 +85,23 @@ namespace cima::display{
                 continue;
             }
 
-            oledDisplay.draw_bitmap(index * 8, 0, icon->getIcon(), 8, 8);
+            oledDisplay->draw_bitmap(index * 8, 0, icon->getIcon(), 8, 8);
             index++;
         }
+    }
+
+    void Display::setEnabled(bool enabled) {
+
+        if(enabled && ! this->enabled) {
+            initDisplay();
+        } else if( ! enabled && this->enabled) {
+            destroyDisplay();
+        }
+
+        this->enabled = enabled;
+    }
+
+    bool Display::isEnabled(){
+        return enabled;
     }
 }

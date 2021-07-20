@@ -47,6 +47,9 @@ namespace cima {
         */
         bool updateFromJson(const char *jsonString);
 
+        /** Returns interpolated value from pallete with millisecond precission. */
+        int getValueForMilis(int milliseconds);
+
     private:
         int getSecondsOfDayFromString(const char *strTime);
         bool storeScheduleToFile();

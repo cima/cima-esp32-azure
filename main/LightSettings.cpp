@@ -6,6 +6,7 @@
 #include <functional>
 #include <iomanip>
 #include <time.h>
+#include <math.h>
 #include <ctime>
 
 #include <cJSON.h>
@@ -108,6 +109,29 @@ namespace cima {
         out << std::endl << "}" << std::endl;
 
         return ! out.fail();
+    }
+
+    int LightSettings::getValueForMilis(int milliseconds){
+        double requestedSconds = milliseconds / 1000.0;
+        std::pair<int, int> startPair = *schedule.rbegin();
+        std::for_each(schedule.begin(), schedule.end(), [&](std::pair<int, int> schedulePair) {
+            if(schedulePair.first <= requestedSconds){
+                startPair = schedulePair;
+            }
+        });
+
+        std::pair<int, int> endPair = *schedule.begin();
+        std::for_each(schedule.rbegin(), schedule.rend(), [&](std::pair<int, int> schedulePair) {
+            if(schedulePair.first >= requestedSconds){
+                endPair = schedulePair;
+            }
+        });
+
+        double t_diff = (endPair.first - startPair.first)*1000;
+        double param = (milliseconds - startPair.first*1000)/t_diff;
+        double v_diff = endPair.second - startPair.second;
+
+        return (int)floor(startPair.second + param * v_diff); 
     }
 
     int LightSettings::getSecondsOfDayFromString(const char *strTime) {

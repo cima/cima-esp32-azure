@@ -58,7 +58,7 @@ cima::system::PWMDriver mosfetDriver(GPIO_NUM_27);
 
 std::string lightScheduleFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/lightSchedule.json";
 cima::LightSettings lightSettings;
-cima::LightAlarmService lightAlarmService(mosfetDriver);
+cima::LightAlarmService lightAlarmService(mosfetDriver, lightSettings);
 
 extern "C" void app_main(void)
 {
@@ -118,8 +118,24 @@ extern "C" void app_main(void)
   iotHubManagerPtr->registerDeviceTwinListener("SunriseAlarm", [&](const char *rawDeviceTwin){
     logger.info("Device twin within callback");
     cJSON *root = cJSON_Parse(rawDeviceTwin);
+    if( ! root) {
+      logger.error("Cant parse device twin from: %s", rawDeviceTwin);
+      return;
+    }
+
     cJSON *desired = cJSON_GetObjectItem(root, "desired");
+    if( ! desired) {
+      //TODO do they really send such stupid once this once that?
+      logger.info("Probably direct desired content");
+      desired = root;
+    }
+
     cJSON *light = cJSON_GetObjectItem(desired, "light");
+    if( ! light) {
+      //TODO do they really send such stupid once this once that?
+      logger.info("Cant parse light settings. Maybe none sent.");
+      return;
+    }
 
     char *lightSchedule = cJSON_Print(light);
 
@@ -127,6 +143,11 @@ extern "C" void app_main(void)
 
     cJSON_free(root);
     cJSON_free(lightSchedule);
+
+    lightAlarmService.setReady(true); //TODO this must be called on system time set (also after network up, but more generecially without azure)
+
+    //TODO just a test
+    //lightAlarmService.loop(); //calls just 1x
   });
 
   agent.registerToMainLoop([&](){iotHubManager->loop();});
@@ -163,10 +184,12 @@ extern "C" void app_main(void)
   logger.info("Registering button handler");
   buttonController.initButton();
   buttonController.addHandler(buttonFunc);
+
+  buttonController.addHandler([&](){ display.setEnabled( ! display.isEnabled()); });
+  
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
   
-  //agent.registerToMainLoop([&](){ lightAlarmService.loop(); });
-  auto lightAlarmServiceThread = std::thread([&](){ lightAlarmService.loop(); });
+  agent.registerToMainLoop([&](){ lightAlarmService.loop(); });
 
   logger.info(" > Main loop");
   agent.mainLoop();
