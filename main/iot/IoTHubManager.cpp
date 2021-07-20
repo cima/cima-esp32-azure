@@ -152,6 +152,10 @@ namespace cima::iot {
     // END ---------- Send confirmation callback section ----------------
 
     // BEGIN ---------- Device Twin callback section ------------------------
+    void IoTHubManager::registerDeviceTwinListener(const std::string &listenerName, DeviceTwinListener method) {
+        deviceTwinLiteners[listenerName] = method;
+    }
+
     void IoTHubManager::deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payLoad, size_t size) {
         char temp[size + 1];
 
@@ -159,6 +163,11 @@ namespace cima::iot {
         temp[size] = '\0';
 
         LOGGER.info("Device twin: %s", temp);
+
+        std::for_each(deviceTwinLiteners.begin(), deviceTwinLiteners.end(), [&](std::pair<std::string, DeviceTwinListener> listener){
+            LOGGER.info("Calling device twin listener: %s", listener.first.c_str());
+            listener.second((const char *)temp);
+        });
     }
 
     void IoTHubManager::deviceTwinCallbackWrapper(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char* payLoad, size_t size, void* userContextCallback) {

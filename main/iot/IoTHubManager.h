@@ -15,6 +15,7 @@
 namespace cima::iot {
 
     typedef std::function<int(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize)> IotHubClientMethod;
+    typedef std::function<void(const char *rawDeviceTwin)> DeviceTwinListener;
 
     class IoTHubManager {
 
@@ -41,6 +42,7 @@ namespace cima::iot {
         std::unique_ptr<IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG, decltype(&releaseIotHubHandle)> iotHubClientHandle;
 
         std::map<std::string, IotHubClientMethod> methods;
+        std::map<std::string, DeviceTwinListener> deviceTwinLiteners;
 
         bool connected = false;
 
@@ -59,6 +61,7 @@ namespace cima::iot {
         void loop();
 
         void registerMethod(const std::string &methodName, IotHubClientMethod method);
+        void registerDeviceTwinListener(const std::string &methodName, DeviceTwinListener method);
 
     private:
         void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result);

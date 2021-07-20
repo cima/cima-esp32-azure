@@ -5,6 +5,8 @@
 namespace cima {
     class LightAlarmService {
 
+        static cima::system::Log LOGGER;
+
         system::PWMDriver ledDriver;
         bool keepRunning = true;
 

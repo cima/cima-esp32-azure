@@ -7,6 +7,8 @@
 
 namespace cima {
 
+    ::cima::system::Log LightAlarmService::LOGGER("LightAlarmService");
+
     LightAlarmService::LightAlarmService(system::PWMDriver &ledDriver) : ledDriver(ledDriver) {}
 
     void LightAlarmService::loop(){

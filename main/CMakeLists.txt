@@ -23,6 +23,7 @@ set(srcs
     "iot/DeviceProvisioningClient.cpp" "iot/DeviceProvisioningClient.h"
     "display/Display.h" "display/Display.cpp"
     "display/StatusIcon.h" "display/StatusIcon.cpp"
+    "LightSettings.h" "LightSettings.cpp"
     ${AZURE_IOT_SDK}/certs/certs.c
 )
 

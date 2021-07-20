@@ -8,6 +8,8 @@
 #include <driver/gpio.h>
 #include <iot_ssd1306.h>
 
+#include <cJSON.h>
+
 #include "system/Log.h"
 
 #include "system/network/WifiManager.h"
@@ -27,6 +29,7 @@
 #include "Agent.h"
 #include "GreetingService.h"
 #include "LightAlarmService.h"
+#include "LightSettings.h"
 
 cima::system::Log logger("main");
 
@@ -52,6 +55,9 @@ cima::display::BooleanStatusIcon wifiStatusIcon(cima::display::StatusIcon::ICON_
 cima::display::BooleanStatusIcon azureStatusIcon(cima::display::StatusIcon::ICON_AZURE_88);
 
 cima::system::PWMDriver mosfetDriver(GPIO_NUM_27);
+
+std::string lightScheduleFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/lightSchedule.json";
+cima::LightSettings lightSettings;
 cima::LightAlarmService lightAlarmService(mosfetDriver);
 
 extern "C" void app_main(void)
@@ -67,6 +73,9 @@ extern "C" void app_main(void)
   if(agent.mountFlashFileSystem()){
     agent.cat("/spiffs/sheep.txt");
   }
+
+  logger.info(" > Light settings");
+  lightSettings.updateFromFile(lightScheduleFile);
 
   cima::display::Display display(wireManager, cima::display::Display::LILYGO_OLED_CONFIG);
   display.addStatusIcon((cima::display::StatusIcon *)&wifiStatusIcon);
@@ -105,6 +114,20 @@ extern "C" void app_main(void)
   
   iotHubManager->registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, 
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+
+  iotHubManagerPtr->registerDeviceTwinListener("SunriseAlarm", [&](const char *rawDeviceTwin){
+    logger.info("Device twin within callback");
+    cJSON *root = cJSON_Parse(rawDeviceTwin);
+    cJSON *desired = cJSON_GetObjectItem(root, "desired");
+    cJSON *light = cJSON_GetObjectItem(desired, "light");
+
+    char *lightSchedule = cJSON_Print(light);
+
+    lightSettings.updateFromJson(lightSchedule);
+
+    cJSON_free(root);
+    cJSON_free(lightSchedule);
+  });
 
   agent.registerToMainLoop([&](){iotHubManager->loop();});
   
