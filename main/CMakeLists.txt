@@ -2,7 +2,7 @@ set(srcs
     "CimaEsp32Agent.cpp"
     "Agent.h" "Agent.cpp"
     "GreetingService.h" "GreetingService.cpp"
-    "LightAlarmService.h" "LightAlarmService.cpp"
+    "LightGroupService.h" "LightGroupService.cpp"
     "system/Log.h" "system/Log.cpp"
     "system/WireManager.h" "system/WireManager.cpp"
     "system/ButtonController.h" "system/ButtonController.cpp"

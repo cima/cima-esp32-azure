@@ -28,7 +28,7 @@
 
 #include "Agent.h"
 #include "GreetingService.h"
-#include "LightAlarmService.h"
+#include "LightGroupService.h"
 #include "LightSettings.h"
 
 cima::system::Log logger("main");
