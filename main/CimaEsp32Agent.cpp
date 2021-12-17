@@ -54,11 +54,12 @@ std::shared_ptr<cima::iot::IoTHubManager> iotHubManagerPtr;
 cima::display::BooleanStatusIcon wifiStatusIcon(cima::display::StatusIcon::ICON_WIFI_88);
 cima::display::BooleanStatusIcon azureStatusIcon(cima::display::StatusIcon::ICON_AZURE_88);
 
-cima::system::PWMDriver mosfetDriver(GPIO_NUM_27);
+cima::system::PWMDriver warmMosfetDriver(GPIO_NUM_26, true);
+cima::system::PWMDriver coldMosfetDriver(GPIO_NUM_27, true);
 
 std::string lightScheduleFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/lightSchedule.json";
-cima::LightSettings lightSettings;
-cima::LightAlarmService lightAlarmService(mosfetDriver, lightSettings);
+cima::LightSettings coldLightSettings;
+cima::LightGroupService coldLightGroupService(coldMosfetDriver, coldLightSettings);
 
 extern "C" void app_main(void)
 {
@@ -75,7 +76,7 @@ extern "C" void app_main(void)
   }
 
   logger.info(" > Light settings");
-  lightSettings.updateFromFile(lightScheduleFile);
+  coldLightSettings.updateFromFile(lightScheduleFile);
 
   cima::display::Display display(wireManager, cima::display::Display::LILYGO_OLED_CONFIG);
   display.addStatusIcon((cima::display::StatusIcon *)&wifiStatusIcon);
@@ -139,12 +140,12 @@ extern "C" void app_main(void)
 
     char *lightSchedule = cJSON_Print(light);
 
-    lightSettings.updateFromJson(lightSchedule);
+    coldLightSettings.updateFromJson(lightSchedule);
 
     cJSON_free(root);
     cJSON_free(lightSchedule);
 
-    lightAlarmService.setReady(true); //TODO this must be called on system time set (also after network up, but more generecially without azure)
+    coldLightGroupService.setReady(true); //TODO this must be called on system time set (also after network up, but more generecially without azure)
 
     //TODO just a test
     //lightAlarmService.loop(); //calls just 1x
@@ -189,13 +190,14 @@ extern "C" void app_main(void)
   
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
   
-  agent.registerToMainLoop([&](){ lightAlarmService.loop(); });
+  agent.registerToMainLoop([&](){ coldLightGroupService.loop(); });
+  //auto lightAlarmServiceThread = std::thread([&](){ lightAlarmService.loop(); });
 
   logger.info(" > Main loop");
   agent.mainLoop();
 
   welcomeGizmo.join();
   welcomeSheep.join();
-  lightAlarmServiceThread.join();
+  // lightAlarmServiceThread.join(); //TODO remove
 
 }

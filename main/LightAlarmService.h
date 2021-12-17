@@ -4,7 +4,7 @@
 #include "LightSettings.h"
 
 namespace cima {
-    class LightAlarmService {
+    class LightGroupService {
 
         static cima::system::Log LOGGER;
 
@@ -14,7 +14,7 @@ namespace cima {
         bool ready = false;
 
     public:
-        LightAlarmService(system::PWMDriver &ledDriver, LightSettings &lightSettings);
+        LightGroupService(system::PWMDriver &ledDriver, LightSettings &lightSettings);
         
         void loop();
         void setReady(bool isReady);

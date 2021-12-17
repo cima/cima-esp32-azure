@@ -1,7 +1,7 @@
 #include "PWMDriver.h"
 
 namespace cima::system {
-    PWMDriver::PWMDriver(gpio_num_t pwmGpioPin) : pwmGpioPin(pwmGpioPin) {
+    PWMDriver::PWMDriver(gpio_num_t pwmGpioPin, bool inverted) : pwmGpioPin(pwmGpioPin), inverted(inverted) {
 
         ledc_channel_config_t ledc_channel = {0};
         ledc_channel.gpio_num = this->pwmGpioPin;
@@ -27,7 +27,7 @@ namespace cima::system {
     }
 
     void PWMDriver::update(uint32_t dutyCycle) {
-        ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, dutyCycle);
+        ledc_set_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, inverted ? (0x01 << LEDC_TIMER_13_BIT) - dutyCycle : dutyCycle);
 	    ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
     }
 }

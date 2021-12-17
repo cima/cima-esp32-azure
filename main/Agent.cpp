@@ -42,7 +42,7 @@ namespace cima {
         LOGGER.info("Payload :\n%.*s", size, payload);
 
         const char* responseMessage = "\"Thanks for asking\"";
-        *responseSize = strlen(responseMessage) + 1;
+        *responseSize = strlen(responseMessage);
         *response = (unsigned char *)strdup(responseMessage);
 
         return 200;
@@ -55,7 +55,7 @@ namespace cima {
         const char * timeText = std::ctime(&end_time);
 
         char responseMessage[512];
-        *responseSize =  sprintf(responseMessage, "{\"time\":\"%s\"}", timeText) + 1;
+        *responseSize =  sprintf(responseMessage, "{\"time\":\"%s\"}", timeText);
         *response = (unsigned char *)strdup(responseMessage);
 
         return 200;

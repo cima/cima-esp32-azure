@@ -7,11 +7,11 @@
 
 namespace cima {
 
-    ::cima::system::Log LightAlarmService::LOGGER("LightAlarmService");
+    ::cima::system::Log LightGroupService::LOGGER("LightAlarmService");
 
-    LightAlarmService::LightAlarmService(system::PWMDriver &ledDriver, LightSettings &lightSettings) : ledDriver(ledDriver), lightSettings(lightSettings) {}
+    LightGroupService::LightGroupService(system::PWMDriver &ledDriver, LightSettings &lightSettings) : ledDriver(ledDriver), lightSettings(lightSettings) {}
 
-    void LightAlarmService::loop(){
+    void LightGroupService::loop(){
 
         if ( ! ready) {
             return;
@@ -34,11 +34,11 @@ namespace cima {
 
     }
 
-    void LightAlarmService::setReady(bool isReady){
+    void LightGroupService::setReady(bool isReady){
         ready = isReady;
     }
 
-    void LightAlarmService::demoLoop(){
+    void LightGroupService::demoLoop(){
         while(true){
             
             struct timespec timeinfo;
