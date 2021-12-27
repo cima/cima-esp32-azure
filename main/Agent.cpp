@@ -48,6 +48,33 @@ namespace cima {
         return 200;
     }
 
+    
+    int Agent::sineLight(cima::LightGroupMap &lightGroups, const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize){
+        LOGGER.info("Payload :\n%.*s", size, payload);
+
+        const char* responseMessage = "\"sine Light Demo finished\"";
+
+        std::string lightGroupName = "unknown";
+        if(size >= 3) {
+            lightGroupName.assign((const char *)payload + 1, size - 2);
+        }
+
+        //TODO call demo loop on selected light group
+        auto lightGroupIt = lightGroups.find(lightGroupName);
+
+        if (lightGroupIt == lightGroups.end()) {
+            LOGGER.info("Unknown light group: <%s>", lightGroupName.c_str());
+            responseMessage = "\"Unknown light group\"";
+        } else {
+            lightGroupIt->second.get().demoLoop();
+        }
+
+        *responseSize = strlen(responseMessage);
+        *response = (unsigned char *)strdup(responseMessage);
+
+        return 200;
+    }
+
     int Agent::whatIsTheTime(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize){
 
         auto end = std::chrono::system_clock::now();

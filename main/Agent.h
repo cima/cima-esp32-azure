@@ -11,6 +11,8 @@
 #include "iot/IoTHubManager.h"
 #include "system/EnvironmentSensorManager.h"
 
+#include "LightGroupService.h"
+
 namespace cima {
     class Agent {
         static const system::Log LOGGER;
@@ -18,6 +20,7 @@ namespace cima {
         std::list<std::function<void()>> mainLoopFunctions;
 
         bool keepRunning = true;
+
         public:
 
             static std::string FLASH_FILESYSTEM_MOUNT_PATH;
@@ -26,6 +29,7 @@ namespace cima {
             void cat(const std::string &filename);
 
             int justPrint(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
+            int sineLight(cima::LightGroupMap &lightGroups, const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
             int whatIsTheTime(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
 
             void initFlashStorage();

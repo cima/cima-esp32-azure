@@ -20,5 +20,9 @@ namespace cima {
         void setReady(bool isReady);
 
         void demoLoop();
+
+        LightSettings &getLightSettings();
     };
+
+    typedef std::map<std::string, boost::reference_wrapper<cima::LightGroupService>> LightGroupMap;
 }

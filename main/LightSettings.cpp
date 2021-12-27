@@ -15,6 +15,8 @@ namespace cima {
     ::cima::system::Log LightSettings::LOGGER("LightSettings");
     const std::string LightSettings::NO_FILE = std::string();
 
+    LightSettings::LightSettings(gpio_num_t gpio_pin) : gpio_pin(gpio_pin) {};
+
     bool LightSettings::updateFromFile(const std::string &jsonFile) {
         this->jsonFile = std::reference_wrapper(jsonFile);
 
@@ -33,10 +35,10 @@ namespace cima {
             return false;
         }
 
-        return updateFromJson(jsonString.c_str());
+        return updateFromJson(jsonString.c_str(), true);
     }
 
-    bool LightSettings::updateFromJson(const char *jsonString){
+    bool LightSettings::updateFromJson(const char *jsonString, bool isVolatile){
         if ( ! jsonString) {
             LOGGER.error("Null jsonString provided.");
             return false;
@@ -60,6 +62,7 @@ namespace cima {
             const char *timeStr = item->string;
             int seconds = getSecondsOfDayFromString(timeStr);
             if (seconds == -1) {
+                LOGGER.info("Invalid time scpecification: %s", timeStr);
                 errors = true;
                 continue;
             }
@@ -80,7 +83,7 @@ namespace cima {
 
         schedule.swap(newSchedule);
 
-        return storeScheduleToFile();
+        return isVolatile || storeScheduleToFile();
     }
 
     bool LightSettings::storeScheduleToFile() {

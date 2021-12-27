@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include <driver/gpio.h>
+#include <driver/ledc.h>
 #include <iot_ssd1306.h>
 
 #include <cJSON.h>
@@ -54,12 +55,28 @@ std::shared_ptr<cima::iot::IoTHubManager> iotHubManagerPtr;
 cima::display::BooleanStatusIcon wifiStatusIcon(cima::display::StatusIcon::ICON_WIFI_88);
 cima::display::BooleanStatusIcon azureStatusIcon(cima::display::StatusIcon::ICON_AZURE_88);
 
-cima::system::PWMDriver warmMosfetDriver(GPIO_NUM_26, true);
-cima::system::PWMDriver coldMosfetDriver(GPIO_NUM_27, true);
+const gpio_num_t WARM_LIGHT_MOSFET_DRIVER_GPIO = GPIO_NUM_26;
+cima::system::PWMDriver warmLightMosfetDriver(WARM_LIGHT_MOSFET_DRIVER_GPIO, LEDC_CHANNEL_0, true);
 
-std::string lightScheduleFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/lightSchedule.json";
-cima::LightSettings coldLightSettings;
-cima::LightGroupService coldLightGroupService(coldMosfetDriver, coldLightSettings);
+const gpio_num_t COLD_LIGHT_MOSFET_DRIVER_GPIO = GPIO_NUM_27;
+cima::system::PWMDriver coldLightMosfetDriver(COLD_LIGHT_MOSFET_DRIVER_GPIO, LEDC_CHANNEL_1, true);
+
+std::string coldLightScheduleFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/coldLightSchedule.json";
+std::string warmLightScheduleFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/warmLightSchedule.json";
+
+std::string coldLightDeviceTwinName = "cold";
+std::string warmLightDeviceTwinName = "warm";
+
+cima::LightSettings coldLightSettings(COLD_LIGHT_MOSFET_DRIVER_GPIO);
+cima::LightGroupService coldLightGroupService(coldLightMosfetDriver, coldLightSettings);
+
+cima::LightSettings warmLightSettings(WARM_LIGHT_MOSFET_DRIVER_GPIO);
+cima::LightGroupService warmLightGroupService(warmLightMosfetDriver, warmLightSettings);
+
+cima::LightGroupMap lightGroups {
+  {coldLightDeviceTwinName, boost::ref(coldLightGroupService)},
+  {warmLightDeviceTwinName, boost::ref(warmLightGroupService)}
+};
 
 extern "C" void app_main(void)
 {
@@ -76,7 +93,8 @@ extern "C" void app_main(void)
   }
 
   logger.info(" > Light settings");
-  coldLightSettings.updateFromFile(lightScheduleFile);
+  coldLightSettings.updateFromFile(coldLightScheduleFile);
+  warmLightSettings.updateFromFile(warmLightScheduleFile);
 
   cima::display::Display display(wireManager, cima::display::Display::LILYGO_OLED_CONFIG);
   display.addStatusIcon((cima::display::StatusIcon *)&wifiStatusIcon);
@@ -116,6 +134,9 @@ extern "C" void app_main(void)
   iotHubManager->registerMethod("whatIsTheTime", std::bind(&cima::Agent::whatIsTheTime, &agent, 
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
+  iotHubManager->registerMethod("sineLight", std::bind(&cima::Agent::sineLight, &agent, lightGroups, 
+    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+
   iotHubManagerPtr->registerDeviceTwinListener("SunriseAlarm", [&](const char *rawDeviceTwin){
     logger.info("Device twin within callback");
     cJSON *root = cJSON_Parse(rawDeviceTwin);
@@ -131,21 +152,43 @@ extern "C" void app_main(void)
       desired = root;
     }
 
-    cJSON *light = cJSON_GetObjectItem(desired, "light");
-    if( ! light) {
-      //TODO do they really send such stupid once this once that?
-      logger.info("Cant parse light settings. Maybe none sent.");
+    cJSON *lights = cJSON_GetObjectItem(desired, "lights");
+    if( ! lights || ! cJSON_IsArray(lights)) {
+      logger.info("Can't parse lights settings. Maybe none sent or not an array.");
       return;
     }
+  
+    int lightCount = cJSON_GetArraySize(lights);
+    for (int i = 0; i < lightCount; i++) {
+      cJSON *light = cJSON_GetArrayItem(lights, i);
 
-    char *lightSchedule = cJSON_Print(light);
+      //TODO sanitize light object
+      auto lightGroupName = std::string(cJSON_GetStringValue(cJSON_GetObjectItem(light, "name")));
+      logger.info("Processing light group[%d]: %s", i, lightGroupName.c_str());
 
-    coldLightSettings.updateFromJson(lightSchedule);
+      cima::LightGroupMap::iterator lightGroupIt = lightGroups.find(lightGroupName);
+      if (lightGroupIt == lightGroups.end()) {
+        continue; //Skipping unregistered light group definition
+      }
+
+      auto schedule = cJSON_GetObjectItem(light, "schedule");
+
+      if( ! schedule) {
+        logger.info("Invalid schedule entry in lightgroup %s", lightGroupName);
+        continue;
+      }
+
+      char *lightSchedule = cJSON_Print(schedule);
+
+      auto lightGroup = lightGroupIt->second;
+
+      lightGroup.get().setReady(true); //TODO this must be called on system time set (also after network up, but more generecially without azure)
+      lightGroup.get().getLightSettings().updateFromJson(lightSchedule);
+
+      cJSON_free(lightSchedule);
+    }
 
     cJSON_free(root);
-    cJSON_free(lightSchedule);
-
-    coldLightGroupService.setReady(true); //TODO this must be called on system time set (also after network up, but more generecially without azure)
 
     //TODO just a test
     //lightAlarmService.loop(); //calls just 1x
@@ -191,6 +234,7 @@ extern "C" void app_main(void)
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
   
   agent.registerToMainLoop([&](){ coldLightGroupService.loop(); });
+  agent.registerToMainLoop([&](){ warmLightGroupService.loop(); });
   //auto lightAlarmServiceThread = std::thread([&](){ lightAlarmService.loop(); });
 
   logger.info(" > Main loop");

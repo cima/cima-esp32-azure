@@ -16,11 +16,12 @@
 namespace cima::system {
     class PWMDriver {
         const gpio_num_t pwmGpioPin;
+        const ledc_channel_t channel;
         const bool inverted = false;
 
 
     public:
-        PWMDriver(gpio_num_t pwmGpioPin, bool inverted = false);
+        PWMDriver(gpio_num_t pwmGpioPin, ledc_channel_t channel, bool inverted = false);
 
         void update(uint32_t dutyCycle);
     };

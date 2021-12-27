@@ -14,6 +14,7 @@ namespace cima {
     void LightGroupService::loop(){
 
         if ( ! ready) {
+            //LOGGER.info("Not ready");
             return;
         }
 
@@ -28,7 +29,7 @@ namespace cima {
         //LOGGER.info("loop milis: %d", milis);
 
         auto duty = lightSettings.getValueForMilis(milis);
-        //LOGGER.info("loop duty: %d", duty);
+        //LOGGER.info("loop duty: %d @ %d", duty, milis);
 
         ledDriver.update((uint32_t)duty);
 
@@ -39,7 +40,11 @@ namespace cima {
     }
 
     void LightGroupService::demoLoop(){
-        while(true){
+        bool currentReady = this->ready;
+        setReady(false);
+
+        //approx. 5 seconds of sine wave intensity
+        for(int i = 0; i < 500; i++){
             
             struct timespec timeinfo;
             clock_gettime(CLOCK_MONOTONIC, &timeinfo);
@@ -50,5 +55,10 @@ namespace cima {
 
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+        setReady(currentReady);
+    }
+
+    LightSettings &LightGroupService::getLightSettings() {
+        return this->lightSettings;
     }
 }
