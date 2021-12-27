@@ -233,15 +233,13 @@ extern "C" void app_main(void)
   
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
   
-  agent.registerToMainLoop([&](){ coldLightGroupService.loop(); });
-  agent.registerToMainLoop([&](){ warmLightGroupService.loop(); });
-  //auto lightAlarmServiceThread = std::thread([&](){ lightAlarmService.loop(); });
+  for(auto lightGroupRef : lightGroups){
+    agent.registerToMainLoop(std::bind(&cima::LightGroupService::loop, &lightGroupRef.second.get()));
+  }
 
   logger.info(" > Main loop");
   agent.mainLoop();
 
   welcomeGizmo.join();
   welcomeSheep.join();
-  // lightAlarmServiceThread.join(); //TODO remove
-
 }
