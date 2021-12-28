@@ -14,6 +14,7 @@
 #include "system/Log.h"
 
 #include "system/network/WifiManager.h"
+#include "system/network/Rf433Controller.h"
 #include "system/WireManager.h"
 #include "system/EnvironmentSensorManager.h"
 #include "system/ButtonController.h"
@@ -39,6 +40,7 @@ cima::system::network::WifiManager wifiManager;
 cima::system::WireManager wireManager(OLED_IIC_NUM, GPIO_NUM_15, GPIO_NUM_4);
 cima::system::EnvironmentSensorManager environmentSensorManager(wireManager);
 cima::system::ButtonController buttonController(GPIO_NUM_0);
+cima::system::network::Rf433Controller rf433Controller(GPIO_NUM_16);
 
 //TODO find certificate in folder instead of fixed path
 std::string keyFile = cima::Agent::FLASH_FILESYSTEM_MOUNT_PATH + "/identity/cimaesp32.pem";
@@ -232,7 +234,12 @@ extern "C" void app_main(void)
   buttonController.addHandler([&](){ display.setEnabled( ! display.isEnabled()); });
   
   agent.registerToMainLoop(std::bind(&cima::system::ButtonController::handleClicks, &buttonController));
+
+  logger.info("Registering rf433 handler");
+  rf433Controller.initRf433();
   
+  agent.registerToMainLoop(std::bind(&cima::system::network::Rf433Controller::handleData, &rf433Controller));
+    
   for(auto lightGroupRef : lightGroups){
     agent.registerToMainLoop(std::bind(&cima::LightGroupService::loop, &lightGroupRef.second.get()));
   }

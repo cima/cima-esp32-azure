@@ -16,6 +16,7 @@ set(srcs
     "system/network/WifiCredentials.h" "system/network/WifiCredentials.cpp"
     "system/network/ModemManager.h" "system/network/ModemManager.cpp"
     "system/network/M590.h" "system/network/M590.cpp"
+    "system/network/Rf433Controller.h" "system/network/Rf433Controller.cpp"
 
     "iot/CertSource.cpp" "iot/CertSource.h"
     "iot/AzureConfig.cpp" "iot/AzureConfig.h"
