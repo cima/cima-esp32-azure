@@ -202,6 +202,11 @@ extern "C" void app_main(void)
   wifiManager.registerNetworkUpHandler([&](){wifiStatusIcon.setActive(true);});
   wifiManager.registerNetworkDownHandler([&](){wifiStatusIcon.setActive(false);});
 
+  wifiManager.registerNetworkUpHandler([&](){
+    coldLightGroupService.setReady(true);
+    warmLightGroupService.setReady(true);
+    });
+
   wifiManager.start();
 
   logger.info(" > Environment sensor");
