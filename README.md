@@ -60,6 +60,10 @@ Download [esp-idf-tools-setup-2.3.exe](https://dl.espressif.com/dl/esp-idf-tools
 
 ### Build & Flash
 
+```
+    idf.py -p COM5 flash
+```
+
 ### STDOUT over serial line over USB
 1. Plug your Lily GO Oled to USB
 2. Open Putty
