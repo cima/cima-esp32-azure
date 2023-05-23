@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <chrono>
+#include <iomanip>
 #include <ctime>  
 #include <string>
 #include <cstring>
@@ -78,12 +79,24 @@ namespace cima {
     int Agent::whatIsTheTime(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize){
 
         auto end = std::chrono::system_clock::now();
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-        const char * timeText = std::ctime(&end_time);
+        std::time_t now_time = std::chrono::system_clock::to_time_t(end);
+
+        
+        auto gmt_time = gmtime(&now_time);
+        auto timestamp = std::put_time(gmt_time, "%Y-%m-%d %H:%M:%S");
+
+        std::stringstream ostr;
+        ostr << timestamp;
+
+        std::string tmpTimeStr(ostr.str());
+        const char *timeText = tmpTimeStr.c_str();
+        LOGGER.info("Current being reported to diret message(loc=%s): %s", ostr.getloc().name().c_str(), timeText);
 
         char responseMessage[512];
         *responseSize =  sprintf(responseMessage, "{\"time\":\"%s\"}", timeText);
         *response = (unsigned char *)strdup(responseMessage);
+
+        LOGGER.info("Replying (len: %d): %s", *responseSize, responseMessage);
 
         return 200;
     }
