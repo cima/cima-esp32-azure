@@ -242,6 +242,8 @@ extern "C" void app_main(void)
 
   logger.info("Registering rf433 handler");
   rf433Controller.initRf433();
+  rf433Controller.addReceiveHandler( std::bind(&cima::Agent::handleRfButton, &agent, boost::ref(warmLightGroupService),
+    std::placeholders::_1, std::placeholders::_2));
   
   agent.registerToMainLoop(std::bind(&cima::system::network::Rf433Controller::handleData, &rf433Controller));
     

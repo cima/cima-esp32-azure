@@ -72,6 +72,8 @@ namespace cima::system::network {
 
             auto message = newMessages.front();
             messageDetails << " " << message.nReceivedProtocol << ": " << message.nReceivedValue;
+            buttonSignal(message.nReceivedProtocol, message.nReceivedValue);
+            
             newMessages.pop();
             
             LOGGER.info("D: %s", messageDetails.str().c_str());
@@ -83,7 +85,7 @@ namespace cima::system::network {
         //messages.pop();
     }
 
-    void Rf433Controller::addReceiveHandler(std::function<void(void)> func){
+    void Rf433Controller::addReceiveHandler(std::function<void(int, long)> func){
         buttonSignal.connect(func);
     }
 

@@ -15,6 +15,7 @@
 
 #include <esp_spiffs.h>
 #include <esp_err.h>
+#include <esp_log.h>
 #include <nvs_flash.h>
 #include <nvs.h>
 
@@ -99,6 +100,36 @@ namespace cima {
         LOGGER.info("Replying (len: %d): %s", *responseSize, responseMessage);
 
         return 200;
+    }
+
+    void Agent::handleRfButton(LightGroupService &lightService, int protocol, long command){
+        if (protocol != 1){
+            return;
+        }
+
+
+        LOGGER.info("Handling (protocol: %d): %d", protocol, command);
+
+        switch (command) {
+            case 260129:
+            {
+                uint32_t now = esp_log_timestamp();
+                if(now - lastRfEventTime < 500){
+                    LOGGER.info("Skipping (protocol: %d): %d", protocol, command);    
+                }
+                lastRfEventTime = now;
+                lightService.toggleContolMode();
+            }
+                break;
+
+            case 260132:
+                lightService.increaseDuty();
+                break;
+
+            case 260130:
+                lightService.decreaseDuty();
+                break;
+        }
     }
 
     void Agent::initFlashStorage(){

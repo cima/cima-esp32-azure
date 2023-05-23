@@ -92,7 +92,7 @@ namespace cima::system::network {
         
      
 
-        boost::signals2::signal<void ()> buttonSignal;
+        boost::signals2::signal<void (int, long)> buttonSignal;
         boost::signals2::signal<void ()> longButtonSignal;
         //<<< TODO
 
@@ -101,7 +101,7 @@ namespace cima::system::network {
         void initRf433();
         void handleData();
 
-        void addReceiveHandler(std::function<void(void)> func);
+        void addReceiveHandler(std::function<void(int, long)> func);
 
     private:
         bool receiveProtocol(const int p, unsigned int changeCount);

@@ -12,11 +12,19 @@ namespace cima {
 
     typedef std::map<unsigned int, unsigned int> ScheduleMap;
 
+    enum LightControlMode {
+        SCHEDULE = 0,
+        MANUAL
+    };
+
     class LightSettings {
         static system::Log LOGGER;
         static const std::string NO_FILE;
 
+        LightControlMode controlMode = SCHEDULE;
+
         ScheduleMap schedule;
+        int manualDuty = 0;
 
         std::reference_wrapper<const std::string> jsonFile = std::ref(NO_FILE);
 
@@ -57,6 +65,18 @@ namespace cima {
 
         /** Returns interpolated value from pallete with millisecond precission. */
         int getValueForMilis(int milliseconds);
+
+        /** Set manual duty cycle length by provided size. */
+        void setManualDuty(int duty);
+
+        /** Get current manually set duty cycle length. */
+        int getManualDuty();
+
+        /** Sets the active mode of the light control for obtaining duyty cycle lenght value. */
+        void setControlMode(LightControlMode controlMode);
+
+        /** Returns the active mode of the light control for obtaining duyty cycle lenght value. */
+        LightControlMode getControlMode();
 
     private:
         int getSecondsOfDayFromString(const char *strTime);

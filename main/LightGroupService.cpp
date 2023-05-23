@@ -18,21 +18,33 @@ namespace cima {
             return;
         }
 
-        auto now = std::chrono::system_clock::now();
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-        auto timer = std::chrono::system_clock::to_time_t(now);
-        std::tm bt = *std::localtime(&timer);
-        int seconds = bt.tm_hour*60*60 + bt.tm_min*60 + bt.tm_sec;
+        int duty = 0;
 
-        auto milis = seconds * 1000 + (int)ms.count();
-        
-        //LOGGER.info("loop milis: %d", milis);
+        switch(lightSettings.getControlMode()){
+    
+        case SCHEDULE:
+        {
+            auto now = std::chrono::system_clock::now();
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+            auto timer = std::chrono::system_clock::to_time_t(now);
+            std::tm bt = *std::localtime(&timer);
+            int seconds = bt.tm_hour*60*60 + bt.tm_min*60 + bt.tm_sec;
 
-        auto duty = lightSettings.getValueForMilis(milis);
-        //LOGGER.info("loop duty: %d @ %d", duty, milis);
+            auto milis = seconds * 1000 + (int)ms.count();
+            
+            //LOGGER.info("loop milis: %d", milis);
+
+            duty = lightSettings.getValueForMilis(milis);
+            //LOGGER.info("loop duty: %d @ %d", duty, milis);
+        }
+            break;
+
+        case MANUAL:
+            duty = lightSettings.getManualDuty();
+            break;
+        }
 
         ledDriver.update((uint32_t)duty);
-
     }
 
     void LightGroupService::setReady(bool isReady){
@@ -60,5 +72,24 @@ namespace cima {
 
     LightSettings &LightGroupService::getLightSettings() {
         return this->lightSettings;
+    }
+
+    void LightGroupService::toggleContolMode() {
+        //TODO magic two might need to get changed when there are more modes
+        LightControlMode newMode = (LightControlMode)((lightSettings.getControlMode() + 1) % 2);
+        LOGGER.info("Switching to control mode: %d", newMode);
+        lightSettings.setControlMode(newMode);
+    }
+
+    void LightGroupService::increaseDuty() {
+        lightSettings.setManualDuty(
+            lightSettings.getManualDuty() + 100
+        );
+    }
+
+    void LightGroupService::decreaseDuty() {
+        lightSettings.setManualDuty(
+            lightSettings.getManualDuty() - 100
+        );
     }
 }

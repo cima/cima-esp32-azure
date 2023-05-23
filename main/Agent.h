@@ -21,6 +21,8 @@ namespace cima {
 
         bool keepRunning = true;
 
+        uint32_t lastRfEventTime;
+
         public:
 
             static std::string FLASH_FILESYSTEM_MOUNT_PATH;
@@ -31,6 +33,8 @@ namespace cima {
             int justPrint(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
             int sineLight(cima::LightGroupMap &lightGroups, const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
             int whatIsTheTime(const unsigned char *payload, size_t size, unsigned char **response, size_t *responseSize);
+
+            void handleRfButton(LightGroupService &lightService, int protocol, long command);
 
             void initFlashStorage();
             bool mountFlashFileSystem();

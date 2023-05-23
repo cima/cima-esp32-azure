@@ -22,6 +22,10 @@ namespace cima {
         void demoLoop();
 
         LightSettings &getLightSettings();
+
+        void toggleContolMode();
+        void increaseDuty();
+        void decreaseDuty();
     };
 
     typedef std::map<std::string, boost::reference_wrapper<cima::LightGroupService>> LightGroupMap;

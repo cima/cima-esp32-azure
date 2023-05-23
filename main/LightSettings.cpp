@@ -147,4 +147,20 @@ namespace cima {
             return -1;
         }
     }
+
+    void LightSettings::setManualDuty(int duty){
+        manualDuty = duty;
+    }
+
+    int LightSettings::getManualDuty() {
+        return manualDuty;
+    }
+
+    void LightSettings::setControlMode(LightControlMode controlMode){
+        this->controlMode = controlMode;
+    }
+
+    LightControlMode LightSettings::getControlMode(){
+        return controlMode;
+    }
 }
